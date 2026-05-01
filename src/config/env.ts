@@ -45,6 +45,9 @@ ADMIN_PASSWORD:string
 OPENAI_API_KEY?: string
 OPENAI_MODEL?: string
 ABLY_API_KEY?: string
+AI_PROVIDER?: "gemini" | "openai"
+GEMINI_API_KEY?: string
+GEMINI_MODEL?: string
 }
 
 const loadEnvVariables = (): EnvConfig => {
@@ -123,7 +126,10 @@ const loadEnvVariables = (): EnvConfig => {
    ADMIN_PASSWORD:process.env.ADMIN_PASSWORD as string,
    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
    OPENAI_MODEL: process.env.OPENAI_MODEL || "gpt-4o-mini",
-   ABLY_API_KEY: process.env.ABLY_API_KEY
+   ABLY_API_KEY: process.env.ABLY_API_KEY,
+   AI_PROVIDER: (process.env.AI_PROVIDER as "gemini" | "openai" | undefined) || (process.env.NODE_ENV === "production" ? "openai" : "gemini"),
+   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+   GEMINI_MODEL: process.env.GEMINI_MODEL || "gemini-2.0-flash"
 
 
     // BETTER_AUTH_SESSION_TOKEN_EXPIRY: process.env.BETTER_AUTH_SESSION_TOKEN_EXPIRY as string,

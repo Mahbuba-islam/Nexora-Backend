@@ -1,7 +1,0 @@
-model UserPresence {
-	userId   String   @id
-	isOnline Boolean  @default(false)
-	lastSeen DateTime @default(now())
-
-	@@map("user_presence")
-}

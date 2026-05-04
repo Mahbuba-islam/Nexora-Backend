@@ -1,176 +1,234 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "../../lib/prisma";
-import { Role, PaymentStatus, ConsultationStatus } from "../../generated/enums";
-import AppError from "../../errorHelpers/AppError";
-import status from "http-status";
-import { IRequestUser } from "../../interfaces/requestUser.interface";
+import {
+  OrderStatus,
+  PaymentStatus,
+  PayoutStatus,
+  Role,
+  SellerStatus,
+} from "../../generated/enums";
+import { toNumber } from "../../utilis/stringUtils";
 
-const getDashboardStatsData = async (user: IRequestUser) => {
-  switch (user.role) {
-    case Role.ADMIN:
-      return getAdminStats();
-    case Role.EXPERT:
-      return getExpertStats(user);
-    case Role.CLIENT:
-      return getClientStats(user);
-    default:
-      throw new AppError(status.BAD_REQUEST, "Invalid user role for dashboard");
-  }
-};
+const overview = async () => {
+  const [totalProducts, totalOrders, totalCustomers, totalAdmins] =
+    await Promise.all([
+      prisma.product.count({ where: { isDeleted: false } }),
+      prisma.order.count(),
+      prisma.user.count({ where: { role: Role.CUSTOMER, isDeleted: false } }),
+      prisma.user.count({ where: { role: Role.ADMIN, isDeleted: false } }),
+    ]);
 
-
-
-const getAdminStats = async () => {
-  const expertCount = await prisma.expert.count();
-  const clientCount = await prisma.client.count();
-  const consultationCount = await prisma.consultation.count();
-  const industryCount = await prisma.industry.count();
-  const paymentCount = await prisma.payment.count();
-  const userCount = await prisma.user.count();
-
-  const totalRevenueAgg = await prisma.payment.aggregate({
-    _sum: { amount: true },
-    where: { status: PaymentStatus.PAID },
+  const paidOrders = await prisma.order.findMany({
+    where: { paymentStatus: PaymentStatus.PAID },
+    select: { grandTotal: true },
   });
+  const totalRevenue = paidOrders.reduce(
+    (s, o) => s + toNumber(o.grandTotal),
+    0
+  );
 
-  const consultationStatusDistribution = await prisma.consultation.groupBy({
-    by: ["status"],
-    _count: { id: true },
-  });
+  const [pendingOrders, paidOrdersCount, shippedOrders, deliveredOrders, cancelledOrders] =
+    await Promise.all([
+      prisma.order.count({ where: { status: OrderStatus.PENDING_PAYMENT } }),
+      prisma.order.count({ where: { status: OrderStatus.PAID } }),
+      prisma.order.count({ where: { status: OrderStatus.SHIPPED } }),
+      prisma.order.count({ where: { status: OrderStatus.DELIVERED } }),
+      prisma.order.count({ where: { status: OrderStatus.CANCELLED } }),
+    ]);
 
-  const formattedStatus = consultationStatusDistribution.map(({ status, _count }) => ({
-    status,
-    count: _count.id,
-  }));
-
-  const revenueByMonth = await getRevenueByMonth();
-
-  return {
-    expertCount,
-    clientCount,
-    consultationCount,
-    industryCount,
-    paymentCount,
-    userCount,
-    totalRevenue: totalRevenueAgg._sum.amount || 0,
-    consultationStatusDistribution: formattedStatus,
-    revenueByMonth,
-  };
-};
-
-
-
-
-
-//expert stats
-
-const getExpertStats = async (user: IRequestUser) => {
-  const expert = await prisma.expert.findUniqueOrThrow({
-    where: { userId: user.userId },
-  });
-
-  const consultationCount = await prisma.consultation.count({
-    where: { expertId: expert.id },
-  });
-
-  const uniqueClients = await prisma.consultation.groupBy({
-    by: ["clientId"],
-    where: { expertId: expert.id },
-    _count: { id: true },
-  });
-
-  const totalRevenueAgg = await prisma.payment.aggregate({
-    _sum: { amount: true },
+  const lowStockProducts = await prisma.product.count({
     where: {
-      status: PaymentStatus.PAID,
-      consultation: { expertId: expert.id },
+      isDeleted: false,
+      trackInventory: true,
+      stock: { lte: 5 },
     },
   });
 
-  const consultationStatusDistribution = await prisma.consultation.groupBy({
-    by: ["status"],
-    where: { expertId: expert.id },
-    _count: { id: true },
-  });
-
-  const formattedStatus = consultationStatusDistribution.map(({ status, _count }) => ({
-    status,
-    count: _count.id,
-  }));
-
-  const reviewCount = await prisma.testimonial.count({
-    where: { expertId: expert.id },
-  });
-
   return {
-    consultationCount,
-    clientCount: uniqueClients.length,
-    totalRevenue: totalRevenueAgg._sum.amount || 0,
-    consultationStatusDistribution: formattedStatus,
-    reviewCount,
+    totals: {
+      products: totalProducts,
+      orders: totalOrders,
+      customers: totalCustomers,
+      admins: totalAdmins,
+      revenue: Math.round(totalRevenue * 100) / 100,
+      lowStockProducts,
+    },
+    orderBreakdown: {
+      pending: pendingOrders,
+      paid: paidOrdersCount,
+      shipped: shippedOrders,
+      delivered: deliveredOrders,
+      cancelled: cancelledOrders,
+    },
   };
 };
 
+const recentOrders = async (limit = 10) => {
+  const orders = await prisma.order.findMany({
+    orderBy: { placedAt: "desc" },
+    take: limit,
+    include: {
+      user: { select: { id: true, name: true, email: true } },
+      items: { select: { id: true, productName: true, quantity: true } },
+    },
+  });
+  return orders;
+};
 
+const topProducts = async (limit = 10) => {
+  return prisma.product.findMany({
+    where: { isDeleted: false },
+    orderBy: [{ soldCount: "desc" }, { avgRating: "desc" }],
+    take: limit,
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      price: true,
+      soldCount: true,
+      avgRating: true,
+      reviewCount: true,
+    },
+  });
+};
 
+const revenueByDay = async (days = 14) => {
+  const since = new Date();
+  since.setDate(since.getDate() - days);
 
-
-//client stats
-
-const getClientStats = async (user: IRequestUser) => {
-  const client = await prisma.client.findUnique({
-    where: { userId: user.userId },
-    select: { id: true },
+  const orders = await prisma.order.findMany({
+    where: {
+      paymentStatus: PaymentStatus.PAID,
+      paidAt: { gte: since },
+    },
+    select: { paidAt: true, grandTotal: true },
   });
 
-  if (!client) {
-    return {
-      consultationCount: 0,
-      consultationStatusDistribution: [],
-    };
+  const buckets: Record<string, number> = {};
+  for (const o of orders) {
+    if (!o.paidAt) continue;
+    const day = o.paidAt.toISOString().slice(0, 10);
+    buckets[day] = (buckets[day] ?? 0) + toNumber(o.grandTotal);
   }
 
-  const consultationCount = await prisma.consultation.count({
-    where: { clientId: client.id },
-  });
+  return Object.entries(buckets)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, total]) => ({ date, total: Math.round(total * 100) / 100 }));
+};
 
-  const consultationStatusDistribution = await prisma.consultation.groupBy({
-    by: ["status"],
-    where: { clientId: client.id },
-    _count: { id: true },
-  });
+/* ============================================================
+ * Marketplace KPIs (multi-vendor specific)
+ * ============================================================ */
 
-  const formattedStatus = consultationStatusDistribution.map(({ status, _count }) => ({
-    status,
-    count: _count.id,
-  }));
+const marketplace = async () => {
+  const [
+    totalSellers,
+    pendingSellers,
+    approvedSellers,
+    suspendedSellers,
+    rejectedSellers,
+  ] = await Promise.all([
+    prisma.seller.count({ where: { isDeleted: false } }),
+    prisma.seller.count({ where: { status: SellerStatus.PENDING, isDeleted: false } }),
+    prisma.seller.count({ where: { status: SellerStatus.APPROVED, isDeleted: false } }),
+    prisma.seller.count({ where: { status: SellerStatus.SUSPENDED, isDeleted: false } }),
+    prisma.seller.count({ where: { status: SellerStatus.REJECTED, isDeleted: false } }),
+  ]);
+
+  // GMV (gross merchandise volume) and platform commission, paid orders only
+  const sellerOrders = await prisma.sellerOrder.findMany({
+    where: {
+      order: { paymentStatus: PaymentStatus.PAID },
+    },
+    select: { grandTotal: true, commissionAmount: true, payoutAmount: true },
+  });
+  const gmv = sellerOrders.reduce((s, o) => s + toNumber(o.grandTotal), 0);
+  const totalCommission = sellerOrders.reduce(
+    (s, o) => s + toNumber(o.commissionAmount),
+    0
+  );
+  const sellerPayoutGross = sellerOrders.reduce(
+    (s, o) => s + toNumber(o.payoutAmount),
+    0
+  );
 
   return {
-    consultationCount,
-    consultationStatusDistribution: formattedStatus,
+    sellers: {
+      total: totalSellers,
+      pending: pendingSellers,
+      approved: approvedSellers,
+      suspended: suspendedSellers,
+      rejected: rejectedSellers,
+    },
+    money: {
+      gmv: Math.round(gmv * 100) / 100,
+      totalCommission: Math.round(totalCommission * 100) / 100,
+      sellerPayoutGross: Math.round(sellerPayoutGross * 100) / 100,
+    },
   };
 };
 
-
-
-
-//revenue by month for admin dashboard
-
-const getRevenueByMonth = async () => {
-  const revenueByMonth = await prisma.$queryRaw`
-    SELECT DATE_TRUNC('month', "createdAt") AS month,
-           CAST(SUM("amount") AS INTEGER) AS amount
-    FROM "payments"
-    WHERE "status" = 'PAID'
-    GROUP BY month
-    ORDER BY month ASC;
-  `;
-
-  return revenueByMonth;
+const topSellers = async (limit = 10) => {
+  return prisma.seller.findMany({
+    where: { isDeleted: false, status: SellerStatus.APPROVED },
+    orderBy: [{ totalSales: "desc" }, { orderCount: "desc" }],
+    take: limit,
+    select: {
+      id: true,
+      shopName: true,
+      shopSlug: true,
+      logo: true,
+      totalSales: true,
+      orderCount: true,
+      avgRating: true,
+      productCount: true,
+    },
+  });
 };
 
+const payoutPipeline = async () => {
+  const [pending, processing, paid, failed] = await Promise.all([
+    prisma.sellerPayout.aggregate({
+      where: { status: PayoutStatus.PENDING },
+      _sum: { netAmount: true },
+      _count: true,
+    }),
+    prisma.sellerPayout.aggregate({
+      where: { status: PayoutStatus.PROCESSING },
+      _sum: { netAmount: true },
+      _count: true,
+    }),
+    prisma.sellerPayout.aggregate({
+      where: { status: PayoutStatus.PAID },
+      _sum: { netAmount: true },
+      _count: true,
+    }),
+    prisma.sellerPayout.aggregate({
+      where: { status: PayoutStatus.FAILED },
+      _sum: { netAmount: true },
+      _count: true,
+    }),
+  ]);
 
+  // Accrued but not yet bundled into a payout
+  const accruedItems = await prisma.sellerPayoutItem.aggregate({
+    where: { payoutId: null },
+    _sum: { netAmount: true },
+    _count: true,
+  });
 
+  const fmt = (a: { _sum: { netAmount: any }; _count: number }) => ({
+    count: a._count,
+    amount: Math.round(toNumber(a._sum.netAmount) * 100) / 100,
+  });
 
-export const StatsService = {
-  getDashboardStatsData,
+  return {
+    accrued: fmt(accruedItems),
+    pending: fmt(pending),
+    processing: fmt(processing),
+    paid: fmt(paid),
+    failed: fmt(failed),
+  };
 };
+
+export const statsService = { overview, recentOrders, topProducts, revenueByDay, marketplace, topSellers, payoutPipeline };

@@ -1,164 +1,103 @@
-import status from "http-status";
-import AppError from "../../errorHelpers/AppError";
 import { prisma } from "../../lib/prisma";
-import { IRequestUser } from "../../interfaces/requestUser.interface";
-import { Role, UserStatus } from "../../generated/enums";
+import { NotificationType } from "../../generated/enums";
 
-type CreateNotificationPayload = {
-  type: string;
+export interface ICreateNotificationPayload {
+  userId: string;
+  type: NotificationType;
+  title: string;
   message: string;
-  userId?: string;
-  role?: Role;
-};
+  actionUrl?: string;
+  metadata?: Record<string, unknown>;
+}
 
-const getNotificationById = async (id: string) => {
-  const notification = await prisma.notification.findUnique({
-    where: { id },
-  });
-
-  if (!notification) {
-    throw new AppError(status.NOT_FOUND, "Notification not found");
-  }
-
-  return notification;
-};
-
-const normalizeNotificationPayload = (payload: CreateNotificationPayload) => ({
-  type: payload.type.trim(),
-  message: payload.message.trim(),
-  userId: payload.userId,
-  role: payload.role,
-});
-
-const createNotification = async (payload: CreateNotificationPayload) => {
-  const { type, message, userId, role } = normalizeNotificationPayload(payload);
-
-  if (!type || !message) {
-    throw new AppError(status.BAD_REQUEST, "Type and message are required");
-  }
-
-  if ((userId && role) || (!userId && !role)) {
-    throw new AppError(status.BAD_REQUEST, "Provide exactly one target: userId or role");
-  }
-
-  if (userId) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      throw new AppError(status.NOT_FOUND, "Target user not found");
-    }
-
-    return prisma.notification.create({
-      data: {
-        type,
-        message,
-        userId,
-      },
-    });
-  }
-
-  if (role) {
-    if (!Object.values(Role).includes(role)) {
-      throw new AppError(status.BAD_REQUEST, "Invalid role provided");
-    }
-
-    const users = await prisma.user.findMany({
-      where: {
-        role,
-        isDeleted: false,
-        status: UserStatus.ACTIVE,
-      },
-      select: { id: true },
-    });
-
-    if (!users.length) {
-      return { count: 0 };
-    }
-
-    const result = await prisma.notification.createMany({
-      data: users.map((user) => ({
-        type,
-        message,
-        userId: user.id,
-      })),
-    });
-
-    return result;
-  }
-
-  throw new AppError(status.BAD_REQUEST, "Either userId or role is required");
-};
-
-const getAllNotifications = async () => {
-  return prisma.notification.findMany({
-    orderBy: { createdAt: "desc" },
-  });
-};
-
-const getMyNotifications = async (user: IRequestUser) => {
-  return prisma.notification.findMany({
-    where: { userId: user.userId },
-    orderBy: { createdAt: "desc" },
-  });
-};
-
-const getUnreadCount = async (user: IRequestUser) => {
-  const unreadCount = await prisma.notification.count({
-    where: {
-      userId: user.userId,
-      read: false,
+const createNotification = async (payload: ICreateNotificationPayload) => {
+  return prisma.notification.create({
+    data: {
+      userId: payload.userId,
+      type: payload.type,
+      title: payload.title,
+      message: payload.message,
+      actionUrl: payload.actionUrl,
+      metadata: payload.metadata as never,
     },
   });
-
-  return { unreadCount };
 };
 
-const markAsRead = async (id: string, user: IRequestUser) => {
-  const notification = await getNotificationById(id);
-
-  if (user.role !== Role.ADMIN && notification.userId !== user.userId) {
-    throw new AppError(status.FORBIDDEN, "Forbidden access to this notification");
-  }
-
-  return prisma.notification.update({
-    where: { id },
-    data: { read: true },
+const createNotificationsForUsers = async (
+  userIds: string[],
+  base: Omit<ICreateNotificationPayload, "userId">
+) => {
+  if (userIds.length === 0) return { count: 0 };
+  return prisma.notification.createMany({
+    data: userIds.map((userId) => ({
+      userId,
+      type: base.type,
+      title: base.title,
+      message: base.message,
+      actionUrl: base.actionUrl,
+      metadata: base.metadata as never,
+    })),
   });
 };
 
-const markAllAsRead = async (user: IRequestUser) => {
-  const result = await prisma.notification.updateMany({
-    where: {
-      userId: user.userId,
-      read: false,
+const listForUser = async (
+  userId: string,
+  query: { page?: string; limit?: string; unreadOnly?: string }
+) => {
+  const page = Math.max(1, Number(query.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
+  const skip = (page - 1) * limit;
+
+  const where = {
+    userId,
+    ...(query.unreadOnly === "true" ? { isRead: false } : {}),
+  };
+
+  const [data, total, unreadCount] = await Promise.all([
+    prisma.notification.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+    }),
+    prisma.notification.count({ where }),
+    prisma.notification.count({ where: { userId, isRead: false } }),
+  ]);
+
+  return {
+    data,
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
     },
-    data: { read: true },
-  });
-
-  return result;
+    unreadCount,
+  };
 };
 
-const deleteNotification = async (id: string, user: IRequestUser) => {
-  const notification = await getNotificationById(id);
-
-  if (user.role !== Role.ADMIN && notification.userId !== user.userId) {
-    throw new AppError(status.FORBIDDEN, "Forbidden access to this notification");
-  }
-
-  await prisma.notification.delete({
-    where: { id },
+const markAsRead = async (id: string, userId: string) => {
+  return prisma.notification.updateMany({
+    where: { id, userId },
+    data: { isRead: true, readAt: new Date() },
   });
+};
 
-  return null;
+const markAllAsRead = async (userId: string) => {
+  return prisma.notification.updateMany({
+    where: { userId, isRead: false },
+    data: { isRead: true, readAt: new Date() },
+  });
+};
+
+const deleteNotification = async (id: string, userId: string) => {
+  return prisma.notification.deleteMany({ where: { id, userId } });
 };
 
 export const notificationService = {
   createNotification,
-  getAllNotifications,
-  getMyNotifications,
-  getUnreadCount,
+  createNotificationsForUsers,
+  listForUser,
   markAsRead,
   markAllAsRead,
   deleteNotification,

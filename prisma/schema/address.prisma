@@ -1,0 +1,40 @@
+// =============================================================
+// Nexora — Addresses (shipping / billing book)
+// =============================================================
+
+model Address {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    type      AddressType @default(SHIPPING)
+    isDefault Boolean     @default(false)
+
+    label     String? // "Home", "Office", "Mom's house"
+    fullName  String
+    phone     String
+    line1     String
+    line2     String?
+    city      String
+    state     String?
+    country   String  @db.VarChar(2) // ISO-3166 alpha-2
+    postalCode String
+
+    // Stripe / external customer mapping for tax & address sync
+    externalRef String?
+
+    isDeleted Boolean   @default(false)
+    deletedAt DateTime?
+
+    // Snapshots — when address is referenced by Order, we keep a copy on Order itself
+    shippingForOrders Order[] @relation("OrderShippingAddress")
+    billingForOrders  Order[] @relation("OrderBillingAddress")
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId])
+    @@index([userId, isDefault])
+    @@map("addresses")
+}

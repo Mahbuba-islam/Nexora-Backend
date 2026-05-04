@@ -1,52 +1,23 @@
-export interface IRegisterClientPayload {
-    fullName:string;
-    email:string;
-    password:string
-    deletedAt:Date
+export interface IRegisterCustomerPayload {
+  fullName: string;
+  email: string;
+  password: string;
 }
 
-
-export interface ILoginUserPayload{
-    email:string
-    password:string
+export interface ILoginUserPayload {
+  email: string;
+  password: string;
 }
-
-export interface IClientDemoLoginPayload {
-    mode?: "client"
-}
-
 
 export interface IChangePasswordPayload {
-  currentPassword?: string
-  newPassword: string
+  currentPassword?: string;
+  newPassword: string;
 }
 
-
-export interface IGoogleSessionPayload {
-
-    session: {
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        userId: string;
-        expiresAt: Date;
-        token: string;
-        ipAddress?: string | null | undefined;
-        userAgent?: string | null | undefined;
-    };
-    user: {
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        email: string;
-        emailVerified: boolean;
-        name: string;
-        image?: string | null | undefined;
-        role: string;
-        status: string;
-        needPasswordChange: boolean;
-        isDeleted: boolean;
-        deletedAt?: Date | null | undefined
-    
-} 
+export interface IUpdateProfilePayload {
+  name?: string;
+  email?: string;
+  image?: string | null;
+  phone?: string;
+  fullName?: string;
 }

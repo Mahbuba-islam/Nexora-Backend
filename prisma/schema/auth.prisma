@@ -1,9 +1,13 @@
+// =============================================================
+// Nexora — Auth (Better Auth)
+// =============================================================
+
 model User {
     id                 String     @id
     name               String
     email              String
     emailVerified      Boolean    @default(false)
-    role               Role       @default(CLIENT)
+    role               Role       @default(CUSTOMER)
     status             UserStatus @default(ACTIVE)
     needPasswordChange Boolean    @default(false)
     isDeleted          Boolean    @default(false)
@@ -11,15 +15,23 @@ model User {
     image              String?
     createdAt          DateTime   @default(now())
     updatedAt          DateTime   @updatedAt
-    sessions           Session[]
-    accounts           Account[]
-    client             Client?
-    expert             Expert?
-    admin              Admin?
-    notifications Notification[]
-    messageReactions MessageReaction[]
-    aiConversations AIConversation[]
-    expertApplications ExpertApplication[]
+
+    sessions Session[]
+    accounts Account[]
+
+    customer Customer?
+    admin    Admin?
+    seller   Seller?
+
+    addresses        Address[]
+    carts            Cart[]
+    orders           Order[]
+    reviews          Review[]
+    wishlist         Wishlist?
+    notifications    Notification[]
+    aiConversations  AIConversation[]
+    productQuestions ProductQuestion[]
+    productAnswers   ProductAnswer[]
 
     @@unique([email])
     @@map("user")

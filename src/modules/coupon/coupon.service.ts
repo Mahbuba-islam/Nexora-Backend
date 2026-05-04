@@ -17,13 +17,23 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
  * Compute the discount amount and final price for a given coupon + cart amount.
  * Throws if the coupon cannot be applied.
  */
+type DecimalLike = { toString(): string } | number | null | undefined;
+const toNum = (v: DecimalLike): number => {
+  if (v == null) return 0;
+  return typeof v === "number" ? v : Number(v.toString());
+};
+const toNumOrNull = (v: DecimalLike): number | null => {
+  if (v == null) return null;
+  return typeof v === "number" ? v : Number(v.toString());
+};
+
 const computeDiscount = (
   coupon: {
     code: string;
     discountType: CouponDiscountType;
-    discountValue: number;
-    maxDiscount: number | null;
-    minAmount: number | null;
+    discountValue: DecimalLike;
+    maxDiscount: DecimalLike;
+    minAmount: DecimalLike;
     expiresAt: Date | null;
     maxUses: number | null;
     usedCount: number;
@@ -44,22 +54,27 @@ const computeDiscount = (
   if (!Number.isFinite(amount) || amount <= 0) {
     throw new AppError(status.BAD_REQUEST, "Amount must be a positive number");
   }
-  if (coupon.minAmount != null && amount < coupon.minAmount) {
+
+  const discountValue = toNum(coupon.discountValue);
+  const maxDiscount = toNumOrNull(coupon.maxDiscount);
+  const minAmount = toNumOrNull(coupon.minAmount);
+
+  if (minAmount != null && amount < minAmount) {
     throw new AppError(
       status.BAD_REQUEST,
-      `Coupon requires a minimum amount of ${coupon.minAmount}`
+      `Coupon requires a minimum amount of ${minAmount}`
     );
   }
 
   let discount = 0;
   if (coupon.discountType === CouponDiscountType.PERCENT) {
-    discount = (amount * coupon.discountValue) / 100;
+    discount = (amount * discountValue) / 100;
   } else {
-    discount = coupon.discountValue;
+    discount = discountValue;
   }
 
-  if (coupon.maxDiscount != null) {
-    discount = Math.min(discount, coupon.maxDiscount);
+  if (maxDiscount != null) {
+    discount = Math.min(discount, maxDiscount);
   }
   discount = Math.max(0, Math.min(discount, amount));
 
@@ -68,7 +83,7 @@ const computeDiscount = (
   return {
     code: coupon.code,
     discountType: coupon.discountType,
-    discountValue: coupon.discountValue,
+    discountValue,
     originalAmount: round2(amount),
     discountAmount: round2(discount),
     finalAmount: round2(finalAmount),

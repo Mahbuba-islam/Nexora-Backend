@@ -422,26 +422,6 @@ export type AdminNullableScalarRelationFilter = {
   isNot?: Prisma.AdminWhereInput | null
 }
 
-export type StringFieldUpdateOperationsInput = {
-  set?: string
-}
-
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
-}
-
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
-export type DateTimeFieldUpdateOperationsInput = {
-  set?: Date | string
-}
-
 export type AdminCreateNestedOneWithoutUserInput = {
   create?: Prisma.XOR<Prisma.AdminCreateWithoutUserInput, Prisma.AdminUncheckedCreateWithoutUserInput>
   connectOrCreate?: Prisma.AdminCreateOrConnectWithoutUserInput

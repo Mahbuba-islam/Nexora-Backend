@@ -31,8 +31,8 @@ export * from "./enums.js"
  * const prisma = new PrismaClient({
  *   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
  * })
- * // Fetch zero or more Admins
- * const admins = await prisma.admin.findMany()
+ * // Fetch zero or more Addresses
+ * const addresses = await prisma.address.findMany()
  * ```
  * 
  * Read more in our [docs](https://pris.ly/d/client).
@@ -41,6 +41,11 @@ export const PrismaClient = $Class.getPrismaClientClass()
 export type PrismaClient<LogOpts extends Prisma.LogLevel = never, OmitOpts extends Prisma.PrismaClientOptions["omit"] = Prisma.PrismaClientOptions["omit"], ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = $Class.PrismaClient<LogOpts, OmitOpts, ExtArgs>
 export { Prisma }
 
+/**
+ * Model Address
+ * 
+ */
+export type Address = Prisma.AddressModel
 /**
  * Model Admin
  * 
@@ -56,11 +61,6 @@ export type AIConversation = Prisma.AIConversationModel
  * 
  */
 export type AIChatMessage = Prisma.AIChatMessageModel
-/**
- * Model Attachment
- * 
- */
-export type Attachment = Prisma.AttachmentModel
 /**
  * Model User
  * 
@@ -82,97 +82,137 @@ export type Account = Prisma.AccountModel
  */
 export type Verification = Prisma.VerificationModel
 /**
- * Model Call
+ * Model Brand
  * 
  */
-export type Call = Prisma.CallModel
+export type Brand = Prisma.BrandModel
 /**
- * Model CallParticipant
+ * Model Cart
  * 
  */
-export type CallParticipant = Prisma.CallParticipantModel
+export type Cart = Prisma.CartModel
 /**
- * Model ChatRoom
+ * Model CartItem
  * 
  */
-export type ChatRoom = Prisma.ChatRoomModel
+export type CartItem = Prisma.CartItemModel
 /**
- * Model Client
+ * Model Category
  * 
  */
-export type Client = Prisma.ClientModel
-/**
- * Model Consultation
- * 
- */
-export type Consultation = Prisma.ConsultationModel
+export type Category = Prisma.CategoryModel
 /**
  * Model Coupon
  * 
  */
 export type Coupon = Prisma.CouponModel
 /**
- * Model Expert
+ * Model Customer
  * 
  */
-export type Expert = Prisma.ExpertModel
-/**
- * Model ExpertApplication
- * 
- */
-export type ExpertApplication = Prisma.ExpertApplicationModel
-/**
- * Model ExpertSchedule
- * 
- */
-export type ExpertSchedule = Prisma.ExpertScheduleModel
-/**
- * Model ExpertVerification
- * 
- */
-export type ExpertVerification = Prisma.ExpertVerificationModel
-/**
- * Model Industry
- * 
- */
-export type Industry = Prisma.IndustryModel
-/**
- * Model Message
- * 
- */
-export type Message = Prisma.MessageModel
-/**
- * Model MessageReaction
- * 
- */
-export type MessageReaction = Prisma.MessageReactionModel
+export type Customer = Prisma.CustomerModel
 /**
  * Model Notification
  * 
  */
 export type Notification = Prisma.NotificationModel
 /**
+ * Model Order
+ * 
+ */
+export type Order = Prisma.OrderModel
+/**
+ * Model OrderItem
+ * 
+ */
+export type OrderItem = Prisma.OrderItemModel
+/**
+ * Model OrderStatusHistory
+ * 
+ */
+export type OrderStatusHistory = Prisma.OrderStatusHistoryModel
+/**
+ * Model SellerOrder
+ * 
+ */
+export type SellerOrder = Prisma.SellerOrderModel
+/**
+ * Model SellerOrderStatusHistory
+ * 
+ */
+export type SellerOrderStatusHistory = Prisma.SellerOrderStatusHistoryModel
+/**
  * Model Payment
  * 
  */
 export type Payment = Prisma.PaymentModel
 /**
- * Model Schedule
+ * Model SellerPayout
  * 
  */
-export type Schedule = Prisma.ScheduleModel
+export type SellerPayout = Prisma.SellerPayoutModel
 /**
- * Model Testimonial
+ * Model SellerPayoutItem
  * 
  */
-export type Testimonial = Prisma.TestimonialModel
+export type SellerPayoutItem = Prisma.SellerPayoutItemModel
 /**
- * Model TypingState
+ * Model Product
  * 
  */
-export type TypingState = Prisma.TypingStateModel
+export type Product = Prisma.ProductModel
 /**
- * Model UserPresence
+ * Model ProductImage
  * 
  */
-export type UserPresence = Prisma.UserPresenceModel
+export type ProductImage = Prisma.ProductImageModel
+/**
+ * Model ProductVariant
+ * 
+ */
+export type ProductVariant = Prisma.ProductVariantModel
+/**
+ * Model ProductSpecification
+ * 
+ */
+export type ProductSpecification = Prisma.ProductSpecificationModel
+/**
+ * Model ProductTag
+ * 
+ */
+export type ProductTag = Prisma.ProductTagModel
+/**
+ * Model ProductQuestion
+ * 
+ */
+export type ProductQuestion = Prisma.ProductQuestionModel
+/**
+ * Model ProductAnswer
+ * 
+ */
+export type ProductAnswer = Prisma.ProductAnswerModel
+/**
+ * Model Review
+ * 
+ */
+export type Review = Prisma.ReviewModel
+/**
+ * Model ReviewImage
+ * 
+ */
+export type ReviewImage = Prisma.ReviewImageModel
+/**
+ * Model Seller
+ * 
+ */
+export type Seller = Prisma.SellerModel
+/**
+ * Model Wishlist
+ * 
+ */
+export type Wishlist = Prisma.WishlistModel
+/**
+ * Model WishlistItem
+ * 
+ */
+export type WishlistItem = Prisma.WishlistItemModel

@@ -67,6 +67,8 @@ export type AIChatMessageCountAggregateOutputType = {
   conversationId: number
   role: number
   content: number
+  toolCalls: number
+  productRefs: number
   model: number
   provider: number
   tokensUsed: number
@@ -118,6 +120,8 @@ export type AIChatMessageCountAggregateInputType = {
   conversationId?: true
   role?: true
   content?: true
+  toolCalls?: true
+  productRefs?: true
   model?: true
   provider?: true
   tokensUsed?: true
@@ -218,6 +222,8 @@ export type AIChatMessageGroupByOutputType = {
   conversationId: string
   role: $Enums.AIChatMessageRole
   content: string
+  toolCalls: runtime.JsonValue | null
+  productRefs: runtime.JsonValue | null
   model: string | null
   provider: string | null
   tokensUsed: number | null
@@ -254,6 +260,8 @@ export type AIChatMessageWhereInput = {
   conversationId?: Prisma.UuidFilter<"AIChatMessage"> | string
   role?: Prisma.EnumAIChatMessageRoleFilter<"AIChatMessage"> | $Enums.AIChatMessageRole
   content?: Prisma.StringFilter<"AIChatMessage"> | string
+  toolCalls?: Prisma.JsonNullableFilter<"AIChatMessage">
+  productRefs?: Prisma.JsonNullableFilter<"AIChatMessage">
   model?: Prisma.StringNullableFilter<"AIChatMessage"> | string | null
   provider?: Prisma.StringNullableFilter<"AIChatMessage"> | string | null
   tokensUsed?: Prisma.IntNullableFilter<"AIChatMessage"> | number | null
@@ -268,6 +276,8 @@ export type AIChatMessageOrderByWithRelationInput = {
   conversationId?: Prisma.SortOrder
   role?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  toolCalls?: Prisma.SortOrderInput | Prisma.SortOrder
+  productRefs?: Prisma.SortOrderInput | Prisma.SortOrder
   model?: Prisma.SortOrderInput | Prisma.SortOrder
   provider?: Prisma.SortOrderInput | Prisma.SortOrder
   tokensUsed?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -285,6 +295,8 @@ export type AIChatMessageWhereUniqueInput = Prisma.AtLeast<{
   conversationId?: Prisma.UuidFilter<"AIChatMessage"> | string
   role?: Prisma.EnumAIChatMessageRoleFilter<"AIChatMessage"> | $Enums.AIChatMessageRole
   content?: Prisma.StringFilter<"AIChatMessage"> | string
+  toolCalls?: Prisma.JsonNullableFilter<"AIChatMessage">
+  productRefs?: Prisma.JsonNullableFilter<"AIChatMessage">
   model?: Prisma.StringNullableFilter<"AIChatMessage"> | string | null
   provider?: Prisma.StringNullableFilter<"AIChatMessage"> | string | null
   tokensUsed?: Prisma.IntNullableFilter<"AIChatMessage"> | number | null
@@ -299,6 +311,8 @@ export type AIChatMessageOrderByWithAggregationInput = {
   conversationId?: Prisma.SortOrder
   role?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  toolCalls?: Prisma.SortOrderInput | Prisma.SortOrder
+  productRefs?: Prisma.SortOrderInput | Prisma.SortOrder
   model?: Prisma.SortOrderInput | Prisma.SortOrder
   provider?: Prisma.SortOrderInput | Prisma.SortOrder
   tokensUsed?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -320,6 +334,8 @@ export type AIChatMessageScalarWhereWithAggregatesInput = {
   conversationId?: Prisma.UuidWithAggregatesFilter<"AIChatMessage"> | string
   role?: Prisma.EnumAIChatMessageRoleWithAggregatesFilter<"AIChatMessage"> | $Enums.AIChatMessageRole
   content?: Prisma.StringWithAggregatesFilter<"AIChatMessage"> | string
+  toolCalls?: Prisma.JsonNullableWithAggregatesFilter<"AIChatMessage">
+  productRefs?: Prisma.JsonNullableWithAggregatesFilter<"AIChatMessage">
   model?: Prisma.StringNullableWithAggregatesFilter<"AIChatMessage"> | string | null
   provider?: Prisma.StringNullableWithAggregatesFilter<"AIChatMessage"> | string | null
   tokensUsed?: Prisma.IntNullableWithAggregatesFilter<"AIChatMessage"> | number | null
@@ -332,6 +348,8 @@ export type AIChatMessageCreateInput = {
   id?: string
   role: $Enums.AIChatMessageRole
   content: string
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  productRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   model?: string | null
   provider?: string | null
   tokensUsed?: number | null
@@ -346,6 +364,8 @@ export type AIChatMessageUncheckedCreateInput = {
   conversationId: string
   role: $Enums.AIChatMessageRole
   content: string
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  productRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   model?: string | null
   provider?: string | null
   tokensUsed?: number | null
@@ -358,6 +378,8 @@ export type AIChatMessageUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumAIChatMessageRoleFieldUpdateOperationsInput | $Enums.AIChatMessageRole
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  productRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   provider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokensUsed?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -372,6 +394,8 @@ export type AIChatMessageUncheckedUpdateInput = {
   conversationId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumAIChatMessageRoleFieldUpdateOperationsInput | $Enums.AIChatMessageRole
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  productRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   provider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokensUsed?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -385,6 +409,8 @@ export type AIChatMessageCreateManyInput = {
   conversationId: string
   role: $Enums.AIChatMessageRole
   content: string
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  productRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   model?: string | null
   provider?: string | null
   tokensUsed?: number | null
@@ -397,6 +423,8 @@ export type AIChatMessageUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumAIChatMessageRoleFieldUpdateOperationsInput | $Enums.AIChatMessageRole
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  productRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   provider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokensUsed?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -410,6 +438,8 @@ export type AIChatMessageUncheckedUpdateManyInput = {
   conversationId?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumAIChatMessageRoleFieldUpdateOperationsInput | $Enums.AIChatMessageRole
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  productRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   provider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokensUsed?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -433,6 +463,8 @@ export type AIChatMessageCountOrderByAggregateInput = {
   conversationId?: Prisma.SortOrder
   role?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  toolCalls?: Prisma.SortOrder
+  productRefs?: Prisma.SortOrder
   model?: Prisma.SortOrder
   provider?: Prisma.SortOrder
   tokensUsed?: Prisma.SortOrder
@@ -539,6 +571,8 @@ export type AIChatMessageCreateWithoutConversationInput = {
   id?: string
   role: $Enums.AIChatMessageRole
   content: string
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  productRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   model?: string | null
   provider?: string | null
   tokensUsed?: number | null
@@ -551,6 +585,8 @@ export type AIChatMessageUncheckedCreateWithoutConversationInput = {
   id?: string
   role: $Enums.AIChatMessageRole
   content: string
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  productRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   model?: string | null
   provider?: string | null
   tokensUsed?: number | null
@@ -593,6 +629,8 @@ export type AIChatMessageScalarWhereInput = {
   conversationId?: Prisma.UuidFilter<"AIChatMessage"> | string
   role?: Prisma.EnumAIChatMessageRoleFilter<"AIChatMessage"> | $Enums.AIChatMessageRole
   content?: Prisma.StringFilter<"AIChatMessage"> | string
+  toolCalls?: Prisma.JsonNullableFilter<"AIChatMessage">
+  productRefs?: Prisma.JsonNullableFilter<"AIChatMessage">
   model?: Prisma.StringNullableFilter<"AIChatMessage"> | string | null
   provider?: Prisma.StringNullableFilter<"AIChatMessage"> | string | null
   tokensUsed?: Prisma.IntNullableFilter<"AIChatMessage"> | number | null
@@ -605,6 +643,8 @@ export type AIChatMessageCreateManyConversationInput = {
   id?: string
   role: $Enums.AIChatMessageRole
   content: string
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  productRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   model?: string | null
   provider?: string | null
   tokensUsed?: number | null
@@ -617,6 +657,8 @@ export type AIChatMessageUpdateWithoutConversationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumAIChatMessageRoleFieldUpdateOperationsInput | $Enums.AIChatMessageRole
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  productRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   provider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokensUsed?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -629,6 +671,8 @@ export type AIChatMessageUncheckedUpdateWithoutConversationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumAIChatMessageRoleFieldUpdateOperationsInput | $Enums.AIChatMessageRole
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  productRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   provider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokensUsed?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -641,6 +685,8 @@ export type AIChatMessageUncheckedUpdateManyWithoutConversationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumAIChatMessageRoleFieldUpdateOperationsInput | $Enums.AIChatMessageRole
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  toolCalls?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  productRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   model?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   provider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tokensUsed?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -656,6 +702,8 @@ export type AIChatMessageSelect<ExtArgs extends runtime.Types.Extensions.Interna
   conversationId?: boolean
   role?: boolean
   content?: boolean
+  toolCalls?: boolean
+  productRefs?: boolean
   model?: boolean
   provider?: boolean
   tokensUsed?: boolean
@@ -670,6 +718,8 @@ export type AIChatMessageSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   conversationId?: boolean
   role?: boolean
   content?: boolean
+  toolCalls?: boolean
+  productRefs?: boolean
   model?: boolean
   provider?: boolean
   tokensUsed?: boolean
@@ -684,6 +734,8 @@ export type AIChatMessageSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   conversationId?: boolean
   role?: boolean
   content?: boolean
+  toolCalls?: boolean
+  productRefs?: boolean
   model?: boolean
   provider?: boolean
   tokensUsed?: boolean
@@ -698,6 +750,8 @@ export type AIChatMessageSelectScalar = {
   conversationId?: boolean
   role?: boolean
   content?: boolean
+  toolCalls?: boolean
+  productRefs?: boolean
   model?: boolean
   provider?: boolean
   tokensUsed?: boolean
@@ -706,7 +760,7 @@ export type AIChatMessageSelectScalar = {
   createdAt?: boolean
 }
 
-export type AIChatMessageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "conversationId" | "role" | "content" | "model" | "provider" | "tokensUsed" | "latencyMs" | "feedback" | "createdAt", ExtArgs["result"]["aIChatMessage"]>
+export type AIChatMessageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "conversationId" | "role" | "content" | "toolCalls" | "productRefs" | "model" | "provider" | "tokensUsed" | "latencyMs" | "feedback" | "createdAt", ExtArgs["result"]["aIChatMessage"]>
 export type AIChatMessageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   conversation?: boolean | Prisma.AIConversationDefaultArgs<ExtArgs>
 }
@@ -727,6 +781,8 @@ export type $AIChatMessagePayload<ExtArgs extends runtime.Types.Extensions.Inter
     conversationId: string
     role: $Enums.AIChatMessageRole
     content: string
+    toolCalls: runtime.JsonValue | null
+    productRefs: runtime.JsonValue | null
     model: string | null
     provider: string | null
     tokensUsed: number | null
@@ -1161,6 +1217,8 @@ export interface AIChatMessageFieldRefs {
   readonly conversationId: Prisma.FieldRef<"AIChatMessage", 'String'>
   readonly role: Prisma.FieldRef<"AIChatMessage", 'AIChatMessageRole'>
   readonly content: Prisma.FieldRef<"AIChatMessage", 'String'>
+  readonly toolCalls: Prisma.FieldRef<"AIChatMessage", 'Json'>
+  readonly productRefs: Prisma.FieldRef<"AIChatMessage", 'Json'>
   readonly model: Prisma.FieldRef<"AIChatMessage", 'String'>
   readonly provider: Prisma.FieldRef<"AIChatMessage", 'String'>
   readonly tokensUsed: Prisma.FieldRef<"AIChatMessage", 'Int'>

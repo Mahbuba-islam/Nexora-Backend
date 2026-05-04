@@ -78,27 +78,27 @@ router.post(
 router.post(
   "/chat/messages",
   chatLimiter,
-  checkAuth(Role.CLIENT, Role.EXPERT, Role.ADMIN),
+  checkAuth(Role.CUSTOMER, Role.ADMIN, Role.STAFF),
   validateRequest(aiValidation.persistedChatMessage),
   aiChatController.sendMessage
 );
 
 router.get(
   "/chat/conversations",
-  checkAuth(Role.CLIENT, Role.EXPERT, Role.ADMIN),
+  checkAuth(Role.CUSTOMER, Role.ADMIN, Role.STAFF),
   aiChatController.listConversations
 );
 
 router.get(
   "/chat/conversations/:conversationId",
-  checkAuth(Role.CLIENT, Role.EXPERT, Role.ADMIN),
+  checkAuth(Role.CUSTOMER, Role.ADMIN, Role.STAFF),
   validateRequest(aiValidation.conversationParams),
   aiChatController.getConversation
 );
 
 router.patch(
   "/chat/conversations/:conversationId/messages/:messageId/feedback",
-  checkAuth(Role.CLIENT, Role.EXPERT, Role.ADMIN),
+  checkAuth(Role.CUSTOMER, Role.ADMIN, Role.STAFF),
   validateRequest(aiValidation.messageFeedback),
   aiChatController.updateMessageFeedback
 );

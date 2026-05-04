@@ -1,0 +1,204 @@
+// =============================================================
+// Nexora — Orders
+// =============================================================
+
+model Order {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    // Human-friendly order code, e.g. "NX-2026-000123"
+    orderNumber String @unique @db.VarChar(40)
+
+    userId String
+    user   User   @relation(fields: [userId], references: [id])
+
+    status            OrderStatus       @default(PENDING_PAYMENT)
+    fulfillmentStatus FulfillmentStatus @default(UNFULFILLED)
+    paymentStatus     PaymentStatus     @default(UNPAID)
+
+    // Money — all values in `currency`
+    currency       String  @default("USD") @db.VarChar(3)
+    subtotal       Decimal @db.Decimal(12, 2)
+    shippingTotal  Decimal @default(0) @db.Decimal(12, 2)
+    taxTotal       Decimal @default(0) @db.Decimal(12, 2)
+    discountTotal  Decimal @default(0) @db.Decimal(12, 2)
+    grandTotal     Decimal @db.Decimal(12, 2)
+
+    // Coupon snapshot
+    couponCode    String?
+    couponDiscount Decimal? @db.Decimal(12, 2)
+
+    // Address relations + frozen snapshots
+    shippingAddressId String?  @db.Uuid
+    shippingAddress   Address? @relation("OrderShippingAddress", fields: [shippingAddressId], references: [id], onDelete: SetNull)
+    shippingSnapshot  Json?
+
+    billingAddressId  String?  @db.Uuid
+    billingAddress    Address? @relation("OrderBillingAddress", fields: [billingAddressId], references: [id], onDelete: SetNull)
+    billingSnapshot   Json?
+
+    // Customer note / staff note
+    customerNote String? @db.Text
+    staffNote    String? @db.Text
+
+    // Lifecycle
+    placedAt    DateTime  @default(now())
+    paidAt      DateTime?
+    shippedAt   DateTime?
+    deliveredAt DateTime?
+    cancelledAt DateTime?
+    cancelReason String?
+
+    items     OrderItem[]
+    payments  Payment[]
+    history   OrderStatusHistory[]
+    cart      Cart?
+    sellerOrders SellerOrder[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId])
+    @@index([orderNumber])
+    @@index([status])
+    @@index([paymentStatus])
+    @@index([placedAt])
+    @@map("orders")
+}
+
+model OrderItem {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    orderId String @db.Uuid
+    order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+    // Per-seller sub-order this item belongs to
+    sellerOrderId String?      @db.Uuid
+    sellerOrder   SellerOrder? @relation(fields: [sellerOrderId], references: [id], onDelete: SetNull)
+
+    sellerId String? @db.Uuid // denormalised for fast filtering
+
+    productId String  @db.Uuid
+    product   Product @relation(fields: [productId], references: [id])
+
+    variantId String?         @db.Uuid
+    variant   ProductVariant? @relation(fields: [variantId], references: [id])
+
+    // Snapshot — never mutate after placement
+    productName  String  @db.VarChar(200)
+    variantName  String? @db.VarChar(200)
+    sku          String  @db.VarChar(80)
+    image        String? @db.VarChar(800)
+    unitPrice    Decimal @db.Decimal(12, 2)
+    quantity     Int
+    lineSubtotal Decimal @db.Decimal(12, 2)
+    lineDiscount Decimal @default(0) @db.Decimal(12, 2)
+    lineTotal    Decimal @db.Decimal(12, 2)
+
+    reviews Review[]
+
+    createdAt DateTime @default(now())
+
+    @@index([orderId])
+    @@index([productId])
+    @@index([sellerOrderId])
+    @@index([sellerId])
+    @@map("order_items")
+}
+
+model OrderStatusHistory {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    orderId String @db.Uuid
+    order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+    fromStatus OrderStatus?
+    toStatus   OrderStatus
+    note       String?
+    changedBy  String? // userId of staff/admin (or null for system)
+
+    createdAt DateTime @default(now())
+
+    @@index([orderId])
+    @@map("order_status_history")
+}
+
+// =============================================================
+// SellerOrder — Amazon-style sub-order, one per seller per order
+// =============================================================
+//
+// When a customer checks out a cart that contains items from
+// multiple sellers, we create ONE Order (the customer’s receipt)
+// PLUS one SellerOrder per distinct seller. Each SellerOrder
+// has its own fulfilment lifecycle, shipping, and payout.
+
+model SellerOrder {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    // Human-friendly code, e.g. "NX-2026-000123-S1"
+    sellerOrderNumber String @unique @db.VarChar(50)
+
+    orderId String @db.Uuid
+    order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+    sellerId String @db.Uuid
+    seller   Seller @relation(fields: [sellerId], references: [id])
+
+    status            SellerOrderStatus @default(PENDING)
+    fulfillmentStatus FulfillmentStatus @default(UNFULFILLED)
+
+    // Money attributable to this seller
+    currency      String  @default("USD") @db.VarChar(3)
+    subtotal      Decimal @db.Decimal(12, 2)
+    shippingTotal Decimal @default(0) @db.Decimal(12, 2)
+    taxTotal      Decimal @default(0) @db.Decimal(12, 2)
+    discountTotal Decimal @default(0) @db.Decimal(12, 2)
+    grandTotal    Decimal @db.Decimal(12, 2)
+
+    // Commission frozen at order time
+    commissionRate   Decimal @default(0) @db.Decimal(5, 2)
+    commissionAmount Decimal @default(0) @db.Decimal(12, 2)
+    payoutAmount     Decimal @default(0) @db.Decimal(12, 2)
+
+    // Shipping / tracking
+    courier        String?
+    trackingNumber String?
+    trackingUrl    String? @db.VarChar(500)
+    shippedAt      DateTime?
+    deliveredAt    DateTime?
+    cancelledAt    DateTime?
+    cancelReason   String?
+
+    // Notes
+    sellerNote   String? @db.Text
+    customerNote String? @db.Text
+
+    items       OrderItem[]
+    history     SellerOrderStatusHistory[]
+    payoutItem  SellerPayoutItem?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([orderId])
+    @@index([sellerId])
+    @@index([status])
+    @@index([sellerOrderNumber])
+    @@map("seller_orders")
+}
+
+model SellerOrderStatusHistory {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    sellerOrderId String      @db.Uuid
+    sellerOrder   SellerOrder @relation(fields: [sellerOrderId], references: [id], onDelete: Cascade)
+
+    fromStatus SellerOrderStatus?
+    toStatus   SellerOrderStatus
+    note       String?
+    changedBy  String? // userId of seller / admin (null = system)
+
+    createdAt DateTime @default(now())
+
+    @@index([sellerOrderId])
+    @@map("seller_order_status_history")
+}

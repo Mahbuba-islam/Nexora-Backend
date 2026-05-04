@@ -1,10 +1,27 @@
-model Notification {
-  id        String   @id @default(uuid())
-  type      String
-  message   String
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  read      Boolean  @default(false)
-}
+// =============================================================
+// Nexora — Notifications
+// =============================================================
 
+model Notification {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    type    NotificationType
+    title   String           @db.VarChar(200)
+    message String           @db.Text
+
+    // Optional link target (e.g. "/orders/NX-2026-000123")
+    actionUrl String? @db.VarChar(500)
+    metadata  Json?
+
+    isRead  Boolean   @default(false)
+    readAt  DateTime?
+
+    createdAt DateTime @default(now())
+
+    @@index([userId, isRead])
+    @@index([type])
+    @@map("notifications")
+}

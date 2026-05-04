@@ -1,53 +1,64 @@
-enum ConsultationStatus {
-    PENDING
-    CONFIRMED
-    ONGOING
-    COMPLETED
-    CANCELLED
-}
-
-enum PaymentStatus {
-    PAID
-    REFUNDED
-    FAILED
-    UNPAID
-}
-
-enum MessageType {
-  TEXT
-  FILE
-  SYSTEM
-}
+// =============================================================
+// Nexora — Enumerations
+// =============================================================
 
 enum UserRole {
-    CLIENT
-    EXPERT
+    CUSTOMER
     ADMIN
+    STAFF
+    SELLER
 }
 
-
-enum CallStatus {
-  PENDING
-  ACTIVE
-  ENDED
+enum Role {
+    CUSTOMER
+    ADMIN
+    STAFF
+    SELLER
 }
 
-enum VerificationStatus {
+// ----------------- Seller / Marketplace -----------------
+enum SellerStatus {
     PENDING
+    APPROVED
+    REJECTED
+    SUSPENDED
+    CLOSED
+}
+
+enum KycStatus {
+    NOT_SUBMITTED
+    SUBMITTED
     APPROVED
     REJECTED
 }
 
-enum ReviewStatus {
-    PENDING
-    APPROVED
-    HIDDEN
+enum PayoutMethod {
+    STRIPE_CONNECT
+    MANUAL_BANK
 }
 
-enum Role {
-    ADMIN
-    EXPERT
-    CLIENT
+enum PayoutStatus {
+    PENDING
+    PROCESSING
+    PAID
+    FAILED
+    CANCELLED
+}
+
+// Per-seller sub-order lifecycle (Amazon-style: each seller fulfils
+// their slice of an Order independently of others).
+enum SellerOrderStatus {
+    PENDING
+    CONFIRMED
+    PROCESSING
+    PACKED
+    SHIPPED
+    OUT_FOR_DELIVERY
+    DELIVERED
+    CANCELLED
+    REFUNDED
+    RETURN_REQUESTED
+    RETURNED
 }
 
 enum UserStatus {
@@ -57,6 +68,89 @@ enum UserStatus {
     SUSPENDED
 }
 
+// ----------------- Catalog -----------------
+enum ProductStatus {
+    DRAFT
+    ACTIVE
+    ARCHIVED
+    OUT_OF_STOCK
+}
+
+enum ProductCondition {
+    NEW
+    REFURBISHED
+    OPEN_BOX
+    USED
+}
+
+// ----------------- Cart / Order -----------------
+enum CartStatus {
+    ACTIVE
+    CONVERTED
+    ABANDONED
+}
+
+enum OrderStatus {
+    PENDING_PAYMENT
+    PAID
+    PROCESSING
+    PACKED
+    SHIPPED
+    OUT_FOR_DELIVERY
+    DELIVERED
+    CANCELLED
+    REFUNDED
+    RETURN_REQUESTED
+    RETURNED
+    FAILED
+}
+
+enum FulfillmentStatus {
+    UNFULFILLED
+    PARTIAL
+    FULFILLED
+    RETURNED
+}
+
+enum PaymentStatus {
+    UNPAID
+    PAID
+    PARTIALLY_REFUNDED
+    REFUNDED
+    FAILED
+    REQUIRES_ACTION
+}
+
+enum PaymentMethod {
+    STRIPE
+    CARD
+    COD
+    BANK_TRANSFER
+    WALLET
+}
+
+enum AddressType {
+    SHIPPING
+    BILLING
+    BOTH
+}
+
+// ----------------- Reviews -----------------
+enum ReviewStatus {
+    PENDING
+    APPROVED
+    HIDDEN
+    REJECTED
+}
+
+// ----------------- Coupons -----------------
+enum CouponDiscountType {
+    PERCENT
+    FIXED
+    FREE_SHIPPING
+}
+
+// ----------------- AI -----------------
 enum AIChatMessageRole {
     USER
     ASSISTANT
@@ -68,13 +162,36 @@ enum AIMessageFeedback {
     DISLIKE
 }
 
-enum ExpertApplicationStatus {
-    PENDING
-    APPROVED
-    REJECTED
+enum AIConversationKind {
+    SHOPPING_ASSISTANT
+    PRODUCT_QA
+    SUPPORT
 }
 
-enum CouponDiscountType {
-    PERCENT
-    FIXED
+// ----------------- Notifications -----------------
+enum NotificationType {
+    ORDER_PLACED
+    ORDER_PAID
+    ORDER_SHIPPED
+    ORDER_DELIVERED
+    ORDER_CANCELLED
+    PAYMENT_FAILED
+    REVIEW_APPROVED
+    PROMO
+    PRICE_DROP
+    BACK_IN_STOCK
+    SYSTEM
+    // Seller-side
+    SELLER_APPLICATION_RECEIVED
+    SELLER_APPROVED
+    SELLER_REJECTED
+    SELLER_SUSPENDED
+    NEW_SELLER_ORDER
+    SELLER_ORDER_CANCELLED
+    LOW_STOCK
+    PAYOUT_INITIATED
+    PAYOUT_PAID
+    PAYOUT_FAILED
+    // Admin-side
+    NEW_SELLER_APPLICATION
 }

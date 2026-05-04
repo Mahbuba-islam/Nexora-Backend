@@ -1,0 +1,28 @@
+// =============================================================
+// Nexora — Brands
+// =============================================================
+
+model Brand {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    name        String  @unique @db.VarChar(120)
+    slug        String  @unique @db.VarChar(140)
+    logo        String? @db.VarChar(500)
+    website     String? @db.VarChar(500)
+    description String? @db.Text
+
+    isFeatured Boolean @default(false)
+    isActive   Boolean @default(true)
+
+    isDeleted Boolean   @default(false)
+    deletedAt DateTime?
+
+    products Product[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([slug])
+    @@index([isActive, isDeleted])
+    @@map("brands")
+}

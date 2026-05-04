@@ -9,79 +9,81 @@
 * 🟢 You can import this file directly.
 */
 
-export const ConsultationStatus = {
-  PENDING: 'PENDING',
-  CONFIRMED: 'CONFIRMED',
-  ONGOING: 'ONGOING',
-  COMPLETED: 'COMPLETED',
-  CANCELLED: 'CANCELLED'
-} as const
-
-export type ConsultationStatus = (typeof ConsultationStatus)[keyof typeof ConsultationStatus]
-
-
-export const PaymentStatus = {
-  PAID: 'PAID',
-  REFUNDED: 'REFUNDED',
-  FAILED: 'FAILED',
-  UNPAID: 'UNPAID'
-} as const
-
-export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]
-
-
-export const MessageType = {
-  TEXT: 'TEXT',
-  FILE: 'FILE',
-  SYSTEM: 'SYSTEM'
-} as const
-
-export type MessageType = (typeof MessageType)[keyof typeof MessageType]
-
-
 export const UserRole = {
-  CLIENT: 'CLIENT',
-  EXPERT: 'EXPERT',
-  ADMIN: 'ADMIN'
+  CUSTOMER: 'CUSTOMER',
+  ADMIN: 'ADMIN',
+  STAFF: 'STAFF',
+  SELLER: 'SELLER'
 } as const
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 
 
-export const CallStatus = {
-  PENDING: 'PENDING',
-  ACTIVE: 'ACTIVE',
-  ENDED: 'ENDED'
+export const Role = {
+  CUSTOMER: 'CUSTOMER',
+  ADMIN: 'ADMIN',
+  STAFF: 'STAFF',
+  SELLER: 'SELLER'
 } as const
 
-export type CallStatus = (typeof CallStatus)[keyof typeof CallStatus]
+export type Role = (typeof Role)[keyof typeof Role]
 
 
-export const VerificationStatus = {
+export const SellerStatus = {
   PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  SUSPENDED: 'SUSPENDED',
+  CLOSED: 'CLOSED'
+} as const
+
+export type SellerStatus = (typeof SellerStatus)[keyof typeof SellerStatus]
+
+
+export const KycStatus = {
+  NOT_SUBMITTED: 'NOT_SUBMITTED',
+  SUBMITTED: 'SUBMITTED',
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED'
 } as const
 
-export type VerificationStatus = (typeof VerificationStatus)[keyof typeof VerificationStatus]
+export type KycStatus = (typeof KycStatus)[keyof typeof KycStatus]
 
 
-export const ReviewStatus = {
+export const PayoutMethod = {
+  STRIPE_CONNECT: 'STRIPE_CONNECT',
+  MANUAL_BANK: 'MANUAL_BANK'
+} as const
+
+export type PayoutMethod = (typeof PayoutMethod)[keyof typeof PayoutMethod]
+
+
+export const PayoutStatus = {
   PENDING: 'PENDING',
-  APPROVED: 'APPROVED',
-  HIDDEN: 'HIDDEN'
+  PROCESSING: 'PROCESSING',
+  PAID: 'PAID',
+  FAILED: 'FAILED',
+  CANCELLED: 'CANCELLED'
 } as const
 
-export type ReviewStatus = (typeof ReviewStatus)[keyof typeof ReviewStatus]
+export type PayoutStatus = (typeof PayoutStatus)[keyof typeof PayoutStatus]
 
 
-export const Role = {
-  ADMIN: 'ADMIN',
-  EXPERT: 'EXPERT',
-  CLIENT: 'CLIENT'
+export const SellerOrderStatus = {
+  PENDING: 'PENDING',
+  CONFIRMED: 'CONFIRMED',
+  PROCESSING: 'PROCESSING',
+  PACKED: 'PACKED',
+  SHIPPED: 'SHIPPED',
+  OUT_FOR_DELIVERY: 'OUT_FOR_DELIVERY',
+  DELIVERED: 'DELIVERED',
+  CANCELLED: 'CANCELLED',
+  REFUNDED: 'REFUNDED',
+  RETURN_REQUESTED: 'RETURN_REQUESTED',
+  RETURNED: 'RETURNED'
 } as const
 
-export type Role = (typeof Role)[keyof typeof Role]
+export type SellerOrderStatus = (typeof SellerOrderStatus)[keyof typeof SellerOrderStatus]
 
 
 export const UserStatus = {
@@ -92,6 +94,114 @@ export const UserStatus = {
 } as const
 
 export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus]
+
+
+export const ProductStatus = {
+  DRAFT: 'DRAFT',
+  ACTIVE: 'ACTIVE',
+  ARCHIVED: 'ARCHIVED',
+  OUT_OF_STOCK: 'OUT_OF_STOCK'
+} as const
+
+export type ProductStatus = (typeof ProductStatus)[keyof typeof ProductStatus]
+
+
+export const ProductCondition = {
+  NEW: 'NEW',
+  REFURBISHED: 'REFURBISHED',
+  OPEN_BOX: 'OPEN_BOX',
+  USED: 'USED'
+} as const
+
+export type ProductCondition = (typeof ProductCondition)[keyof typeof ProductCondition]
+
+
+export const CartStatus = {
+  ACTIVE: 'ACTIVE',
+  CONVERTED: 'CONVERTED',
+  ABANDONED: 'ABANDONED'
+} as const
+
+export type CartStatus = (typeof CartStatus)[keyof typeof CartStatus]
+
+
+export const OrderStatus = {
+  PENDING_PAYMENT: 'PENDING_PAYMENT',
+  PAID: 'PAID',
+  PROCESSING: 'PROCESSING',
+  PACKED: 'PACKED',
+  SHIPPED: 'SHIPPED',
+  OUT_FOR_DELIVERY: 'OUT_FOR_DELIVERY',
+  DELIVERED: 'DELIVERED',
+  CANCELLED: 'CANCELLED',
+  REFUNDED: 'REFUNDED',
+  RETURN_REQUESTED: 'RETURN_REQUESTED',
+  RETURNED: 'RETURNED',
+  FAILED: 'FAILED'
+} as const
+
+export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus]
+
+
+export const FulfillmentStatus = {
+  UNFULFILLED: 'UNFULFILLED',
+  PARTIAL: 'PARTIAL',
+  FULFILLED: 'FULFILLED',
+  RETURNED: 'RETURNED'
+} as const
+
+export type FulfillmentStatus = (typeof FulfillmentStatus)[keyof typeof FulfillmentStatus]
+
+
+export const PaymentStatus = {
+  UNPAID: 'UNPAID',
+  PAID: 'PAID',
+  PARTIALLY_REFUNDED: 'PARTIALLY_REFUNDED',
+  REFUNDED: 'REFUNDED',
+  FAILED: 'FAILED',
+  REQUIRES_ACTION: 'REQUIRES_ACTION'
+} as const
+
+export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]
+
+
+export const PaymentMethod = {
+  STRIPE: 'STRIPE',
+  CARD: 'CARD',
+  COD: 'COD',
+  BANK_TRANSFER: 'BANK_TRANSFER',
+  WALLET: 'WALLET'
+} as const
+
+export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
+
+
+export const AddressType = {
+  SHIPPING: 'SHIPPING',
+  BILLING: 'BILLING',
+  BOTH: 'BOTH'
+} as const
+
+export type AddressType = (typeof AddressType)[keyof typeof AddressType]
+
+
+export const ReviewStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  HIDDEN: 'HIDDEN',
+  REJECTED: 'REJECTED'
+} as const
+
+export type ReviewStatus = (typeof ReviewStatus)[keyof typeof ReviewStatus]
+
+
+export const CouponDiscountType = {
+  PERCENT: 'PERCENT',
+  FIXED: 'FIXED',
+  FREE_SHIPPING: 'FREE_SHIPPING'
+} as const
+
+export type CouponDiscountType = (typeof CouponDiscountType)[keyof typeof CouponDiscountType]
 
 
 export const AIChatMessageRole = {
@@ -111,18 +221,38 @@ export const AIMessageFeedback = {
 export type AIMessageFeedback = (typeof AIMessageFeedback)[keyof typeof AIMessageFeedback]
 
 
-export const ExpertApplicationStatus = {
-  PENDING: 'PENDING',
-  APPROVED: 'APPROVED',
-  REJECTED: 'REJECTED'
+export const AIConversationKind = {
+  SHOPPING_ASSISTANT: 'SHOPPING_ASSISTANT',
+  PRODUCT_QA: 'PRODUCT_QA',
+  SUPPORT: 'SUPPORT'
 } as const
 
-export type ExpertApplicationStatus = (typeof ExpertApplicationStatus)[keyof typeof ExpertApplicationStatus]
+export type AIConversationKind = (typeof AIConversationKind)[keyof typeof AIConversationKind]
 
 
-export const CouponDiscountType = {
-  PERCENT: 'PERCENT',
-  FIXED: 'FIXED'
+export const NotificationType = {
+  ORDER_PLACED: 'ORDER_PLACED',
+  ORDER_PAID: 'ORDER_PAID',
+  ORDER_SHIPPED: 'ORDER_SHIPPED',
+  ORDER_DELIVERED: 'ORDER_DELIVERED',
+  ORDER_CANCELLED: 'ORDER_CANCELLED',
+  PAYMENT_FAILED: 'PAYMENT_FAILED',
+  REVIEW_APPROVED: 'REVIEW_APPROVED',
+  PROMO: 'PROMO',
+  PRICE_DROP: 'PRICE_DROP',
+  BACK_IN_STOCK: 'BACK_IN_STOCK',
+  SYSTEM: 'SYSTEM',
+  SELLER_APPLICATION_RECEIVED: 'SELLER_APPLICATION_RECEIVED',
+  SELLER_APPROVED: 'SELLER_APPROVED',
+  SELLER_REJECTED: 'SELLER_REJECTED',
+  SELLER_SUSPENDED: 'SELLER_SUSPENDED',
+  NEW_SELLER_ORDER: 'NEW_SELLER_ORDER',
+  SELLER_ORDER_CANCELLED: 'SELLER_ORDER_CANCELLED',
+  LOW_STOCK: 'LOW_STOCK',
+  PAYOUT_INITIATED: 'PAYOUT_INITIATED',
+  PAYOUT_PAID: 'PAYOUT_PAID',
+  PAYOUT_FAILED: 'PAYOUT_FAILED',
+  NEW_SELLER_APPLICATION: 'NEW_SELLER_APPLICATION'
 } as const
 
-export type CouponDiscountType = (typeof CouponDiscountType)[keyof typeof CouponDiscountType]
+export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType]

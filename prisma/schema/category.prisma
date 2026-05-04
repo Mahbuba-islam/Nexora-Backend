@@ -1,0 +1,35 @@
+// =============================================================
+// Nexora — Categories (hierarchical)
+// =============================================================
+
+model Category {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    name        String  @db.VarChar(120)
+    slug        String  @unique @db.VarChar(140)
+    description String? @db.Text
+    icon        String? @db.VarChar(255)
+    image       String? @db.VarChar(500)
+
+    // Self-referencing hierarchy
+    parentId String?    @db.Uuid
+    parent   Category?  @relation("CategoryToSubcategory", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+    children Category[] @relation("CategoryToSubcategory")
+
+    sortOrder  Int     @default(0)
+    isFeatured Boolean @default(false)
+    isActive   Boolean @default(true)
+
+    isDeleted Boolean   @default(false)
+    deletedAt DateTime?
+
+    products Product[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([parentId])
+    @@index([slug])
+    @@index([isActive, isDeleted])
+    @@map("categories")
+}

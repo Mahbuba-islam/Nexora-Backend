@@ -1,0 +1,204 @@
+// =============================================================
+// Nexora — Product catalog
+// =============================================================
+
+model Product {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    name        String  @db.VarChar(200)
+    slug        String  @unique @db.VarChar(220)
+    sku         String  @unique @db.VarChar(80)
+    shortDesc   String? @db.VarChar(500)
+    description String  @db.Text
+
+    // Pricing (base). Variants may override.
+    price        Decimal  @db.Decimal(12, 2)
+    compareAtPrice Decimal? @db.Decimal(12, 2) // strike-through MSRP
+    costPerItem  Decimal? @db.Decimal(12, 2) // internal margin tracking
+    currency     String   @default("USD") @db.VarChar(3)
+
+    // Inventory (used when product has no variants)
+    stock         Int     @default(0)
+    lowStockAlert Int     @default(5)
+    trackInventory Boolean @default(true)
+    allowBackorder Boolean @default(false)
+
+    // Physical
+    weightGrams Int? // shipping weight
+    widthMm     Int?
+    heightMm    Int?
+    depthMm     Int?
+
+    // Metadata
+    status     ProductStatus    @default(DRAFT)
+    condition  ProductCondition @default(NEW)
+    isFeatured Boolean          @default(false)
+    isBestseller Boolean        @default(false)
+    isNewArrival Boolean        @default(false)
+    isOnSale   Boolean          @default(false)
+
+    // SEO
+    metaTitle       String? @db.VarChar(200)
+    metaDescription String? @db.VarChar(500)
+
+    // Relations
+    sellerId String @db.Uuid
+    seller   Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+    brandId String? @db.Uuid
+    brand   Brand?  @relation(fields: [brandId], references: [id], onDelete: SetNull)
+
+    categoryId String   @db.Uuid
+    category   Category @relation(fields: [categoryId], references: [id])
+
+    images         ProductImage[]
+    variants       ProductVariant[]
+    specifications ProductSpecification[]
+    tags           ProductTag[]
+
+    cartItems    CartItem[]
+    orderItems   OrderItem[]
+    reviews      Review[]
+    wishlistItems WishlistItem[]
+    questions    ProductQuestion[]
+
+    // Aggregates (denormalised for fast list queries)
+    avgRating    Decimal? @db.Decimal(3, 2)
+    reviewCount  Int      @default(0)
+    soldCount    Int      @default(0)
+    viewCount    Int      @default(0)
+
+    publishedAt DateTime?
+    isDeleted   Boolean   @default(false)
+    deletedAt   DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([slug])
+    @@index([sku])
+    @@index([sellerId])
+    @@index([categoryId])
+    @@index([brandId])
+    @@index([status, isDeleted])
+    @@index([isFeatured])
+    @@index([isOnSale])
+    @@index([price])
+    @@map("products")
+}
+
+model ProductImage {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    productId String  @db.Uuid
+    product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+    url       String  @db.VarChar(800)
+    alt       String? @db.VarChar(200)
+    sortOrder Int     @default(0)
+    isPrimary Boolean @default(false)
+
+    createdAt DateTime @default(now())
+
+    @@index([productId])
+    @@map("product_images")
+}
+
+model ProductVariant {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    productId String  @db.Uuid
+    product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+    sku   String @unique @db.VarChar(80)
+    name  String @db.VarChar(200) // "Space Gray / 512GB / M3 Pro"
+
+    // Variant attributes (e.g. { color: "Space Gray", storage: "512GB" })
+    attributes Json
+
+    price        Decimal  @db.Decimal(12, 2)
+    compareAtPrice Decimal? @db.Decimal(12, 2)
+    stock        Int      @default(0)
+    image        String?  @db.VarChar(800)
+
+    isActive Boolean @default(true)
+
+    cartItems  CartItem[]
+    orderItems OrderItem[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([productId])
+    @@map("product_variants")
+}
+
+model ProductSpecification {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    productId String  @db.Uuid
+    product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+    group     String? @db.VarChar(80) // e.g. "Display", "Performance"
+    label     String  @db.VarChar(120) // "Resolution"
+    value     String  @db.VarChar(400) // "2560 x 1600"
+    sortOrder Int     @default(0)
+
+    @@index([productId])
+    @@map("product_specifications")
+}
+
+model ProductTag {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    name String @unique @db.VarChar(60)
+    slug String @unique @db.VarChar(80)
+
+    products Product[]
+
+    @@map("product_tags")
+}
+
+// ----------------- Customer Q&A -----------------
+
+model ProductQuestion {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    productId String  @db.Uuid
+    product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    question String @db.Text
+
+    isAnswered Boolean @default(false)
+    isHidden   Boolean @default(false)
+
+    answers ProductAnswer[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([productId])
+    @@map("product_questions")
+}
+
+model ProductAnswer {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    questionId String          @db.Uuid
+    question   ProductQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    answer    String @db.Text
+    isOfficial Boolean @default(false) // staff/AI answer
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([questionId])
+    @@map("product_answers")
+}

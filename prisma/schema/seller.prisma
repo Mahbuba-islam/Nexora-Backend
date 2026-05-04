@@ -1,0 +1,110 @@
+// =============================================================
+// Nexora — Sellers (multi-vendor marketplace)
+// =============================================================
+//
+// A Seller is a merchant who lists products on the Nexora marketplace.
+// One User (with role = SELLER) maps to exactly one Seller. The Seller
+// row holds the public storefront ("shop") fields and the private
+// payout / KYC fields.
+//
+// Lifecycle:
+//   1. A User submits a seller application (creates Seller row with
+//      status = PENDING and applicationData snapshot).
+//   2. Admin reviews and either APPROVES (status = APPROVED, user.role
+//      becomes SELLER) or REJECTS (status = REJECTED, rejectionReason set).
+//   3. Approved seller can list products, fulfil sub-orders and receive
+//      payouts.
+//   4. Admin can SUSPEND a seller (products auto-hidden, no new orders).
+
+model Seller {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    // 1:1 with User
+    userId String @unique
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    // ----- Public storefront -----
+    shopName        String  @unique @db.VarChar(120)
+    shopSlug        String  @unique @db.VarChar(140)
+    tagline         String? @db.VarChar(200)
+    description     String? @db.Text
+    logo            String? @db.VarChar(500)
+    banner          String? @db.VarChar(500)
+
+    // Contact
+    contactEmail String  @db.VarChar(160)
+    contactPhone String? @db.VarChar(40)
+    websiteUrl   String? @db.VarChar(500)
+
+    // Business details
+    legalName     String? @db.VarChar(200)
+    businessType  String? @db.VarChar(60)  // INDIVIDUAL | COMPANY | LLC | etc.
+    taxId         String? @db.VarChar(80)
+    registrationNo String? @db.VarChar(120)
+
+    // Address (snapshot — not the user's shipping address book)
+    addressLine1 String? @db.VarChar(200)
+    addressLine2 String? @db.VarChar(200)
+    city         String? @db.VarChar(120)
+    state        String? @db.VarChar(120)
+    country      String? @db.VarChar(2)
+    postalCode   String? @db.VarChar(20)
+
+    // Policies (markdown / plaintext)
+    returnPolicy   String? @db.Text
+    shippingPolicy String? @db.Text
+
+    // ----- Lifecycle -----
+    status            SellerStatus @default(PENDING)
+    kycStatus         KycStatus    @default(NOT_SUBMITTED)
+    rejectionReason   String?      @db.Text
+    suspensionReason  String?      @db.Text
+
+    // Snapshot of fields submitted at application time — preserved
+    // even if seller later edits profile, for audit purposes.
+    applicationData Json?
+    appliedAt       DateTime  @default(now())
+    approvedAt      DateTime?
+    approvedById    String? // adminUserId
+    suspendedAt     DateTime?
+    rejectedAt      DateTime?
+
+    // ----- Payout config -----
+    // Either Stripe Connect (preferred) or manual bank transfer.
+    payoutMethod          PayoutMethod  @default(MANUAL_BANK)
+    stripeAccountId       String?       @unique
+    stripeOnboardingDone  Boolean       @default(false)
+    bankAccountHolderName String?       @db.VarChar(200)
+    bankAccountNumber     String?       @db.VarChar(80)
+    bankRoutingNumber     String?       @db.VarChar(80)
+    bankName              String?       @db.VarChar(200)
+    bankCountry           String?       @db.VarChar(2)
+
+    // Commission rate Nexora takes per sale, as a percent (0..100).
+    // null = use platform default from env / settings.
+    commissionRate Decimal? @db.Decimal(5, 2)
+
+    // ----- Aggregates (denormalised for fast list / dashboard queries) -----
+    productCount Int      @default(0)
+    orderCount   Int      @default(0)
+    totalSales   Decimal  @default(0) @db.Decimal(14, 2)
+    avgRating    Decimal? @db.Decimal(3, 2)
+    reviewCount  Int      @default(0)
+
+    // Soft delete
+    isDeleted Boolean   @default(false)
+    deletedAt DateTime?
+
+    // ----- Relations -----
+    products     Product[]
+    sellerOrders SellerOrder[]
+    payouts      SellerPayout[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([shopSlug])
+    @@index([status])
+    @@index([isDeleted])
+    @@map("sellers")
+}

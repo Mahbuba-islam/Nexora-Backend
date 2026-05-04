@@ -1,0 +1,54 @@
+// =============================================================
+// Nexora — Reviews (verified-purchase only)
+// =============================================================
+
+model Review {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    productId String  @db.Uuid
+    product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    // Tie review to a specific purchased line — proves "verified purchase"
+    orderItemId String?    @db.Uuid
+    orderItem   OrderItem? @relation(fields: [orderItemId], references: [id], onDelete: SetNull)
+
+    rating  Int          @db.SmallInt // 1..5 (validated app-side)
+    title   String?      @db.VarChar(200)
+    comment String?      @db.Text
+    status  ReviewStatus @default(PENDING)
+
+    // Helpful votes
+    helpfulCount Int @default(0)
+
+    // Staff reply
+    staffReply    String?
+    staffRepliedAt DateTime?
+
+    images ReviewImage[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([userId, orderItemId])
+    @@index([productId])
+    @@index([status])
+    @@index([rating])
+    @@map("reviews")
+}
+
+model ReviewImage {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    reviewId String @db.Uuid
+    review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+    url String @db.VarChar(800)
+
+    createdAt DateTime @default(now())
+
+    @@index([reviewId])
+    @@map("review_images")
+}

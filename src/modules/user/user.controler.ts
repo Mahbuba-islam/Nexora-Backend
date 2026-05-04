@@ -1,44 +1,32 @@
 import { Request, Response } from "express";
-import { userService } from "./user.service";
-
 import status from "http-status";
+
 import { catchAsync } from "../../shared/catchAsync";
 import { sendResponse } from "../../shared/sendResponsr";
-import { IqueryParams } from "../../interfaces/query.interface";
+import { userService } from "./user.service";
 
-
-
-
-
-
-//create admin controler
-
-const createAdmin = catchAsync(async(req: Request, res: Response) => {
-    const payload = req.body
-    const result = await userService.createAdmin(payload)
-   sendResponse(res, {
+const createAdmin = catchAsync(async (req: Request, res: Response) => {
+  const result = await userService.createAdmin(req.body);
+  sendResponse(res, {
+    httpStatusCode: status.CREATED,
     success: true,
-    httpStatusCode:status.CREATED,
-    message: "Admin created successfully",
-    data: result
-   })
-})
+    message: "Admin created",
+    data: result,
+  });
+});
 
-const getAllClients = catchAsync(async (req: Request, res: Response) => {
-    const result = await userService.getAllClients(req.query as IqueryParams)
-
-    sendResponse(res, {
-        success: true,
-        httpStatusCode: status.OK,
-        message: "Clients retrieved successfully",
-        data: result.data,
-        meta: result.meta,
-    })
-})
+const getAllCustomers = catchAsync(async (req: Request, res: Response) => {
+  const result = await userService.getAllCustomers(req.query as any);
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Customers fetched",
+    data: result.data,
+    meta: result.meta,
+  });
+});
 
 export const userController = {
-   createAdmin,
-   getAllClients,
-    
-}
-
+  createAdmin,
+  getAllCustomers,
+};

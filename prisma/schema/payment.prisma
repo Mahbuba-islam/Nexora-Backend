@@ -1,49 +1,37 @@
+// =============================================================
+// Nexora — Payments (one Order can have multiple payment attempts)
+// =============================================================
+
 model Payment {
     id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-    consultationId String       @unique @db.Uuid
-    consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+    orderId String @db.Uuid
+    order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-    amount Float
-    status PaymentStatus @default(UNPAID)
+    method   PaymentMethod  @default(STRIPE)
+    status   PaymentStatus  @default(UNPAID)
+    currency String         @default("USD") @db.VarChar(3)
 
-    // Coupon snapshot (kept on payment to preserve historical pricing).
-    originalAmount Float?
-    discountAmount Float?  @default(0)
-    couponCode     String?
+    amount         Decimal  @db.Decimal(12, 2)
+    refundedAmount Decimal  @default(0) @db.Decimal(12, 2)
 
-    transactionId      String  @unique
-    stripeEventId      String? @unique
+    // Stripe references
+    stripePaymentIntentId String? @unique
+    stripeChargeId        String? @unique
+    stripeEventId         String? @unique
+    transactionId         String? @unique
+
+    // Store last gateway payload for diagnostics
     paymentGatewayData Json?
+    failureReason      String?
+
+    paidAt     DateTime?
+    refundedAt DateTime?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    @@index([consultationId])
-    @@index([transactionId])
+    @@index([orderId])
+    @@index([status])
     @@map("payments")
 }
-
-// model Payment {
-//     id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-
-//     projectId String
-//     project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-//     clientId String
-//     client   User   @relation(fields: [clientId], references: [id])
-
-//     amount Float
-//     status PaymentStatus @default(UNPAID)
-
-//     transactionId      String  @unique
-//     stripeEventId      String? @unique
-//     paymentGatewayData Json?
-
-//     createdAt DateTime @default(now())
-//     updatedAt DateTime @updatedAt
-
-//     @@index([projectId])
-//     @@index([transactionId])
-//     @@map("payments")
-// }

@@ -1,0 +1,72 @@
+// =============================================================
+// Nexora — Seller Payouts
+// =============================================================
+//
+// When a customer pays for an Order, the platform owes each seller
+// the line totals for their items minus the platform commission.
+//
+// We accrue this as `SellerPayoutItem` rows the moment a SellerOrder
+// reaches DELIVERED (or a configurable "available for payout" status).
+// A `SellerPayout` is the actual disbursement (Stripe Connect transfer
+// or manual bank wire) which groups many SellerPayoutItems together.
+
+model SellerPayout {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    sellerId String @db.Uuid
+    seller   Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+    // Period this payout covers
+    periodStart DateTime
+    periodEnd   DateTime
+
+    currency  String  @default("USD") @db.VarChar(3)
+    grossAmount Decimal @db.Decimal(14, 2) // sum of item subtotals
+    commissionAmount Decimal @default(0) @db.Decimal(14, 2)
+    refundAmount     Decimal @default(0) @db.Decimal(14, 2)
+    adjustmentAmount Decimal @default(0) @db.Decimal(14, 2)
+    netAmount        Decimal @db.Decimal(14, 2)
+
+    method PayoutMethod @default(MANUAL_BANK)
+    status PayoutStatus @default(PENDING)
+
+    // Gateway references
+    stripeTransferId String? @unique
+    bankReference    String?
+    failureReason    String? @db.Text
+    notes            String? @db.Text
+
+    initiatedAt DateTime?
+    paidAt      DateTime?
+
+    items SellerPayoutItem[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([sellerId])
+    @@index([status])
+    @@index([periodStart, periodEnd])
+    @@map("seller_payouts")
+}
+
+model SellerPayoutItem {
+    id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+    payoutId String?       @db.Uuid
+    payout   SellerPayout? @relation(fields: [payoutId], references: [id], onDelete: SetNull)
+
+    sellerOrderId String      @unique @db.Uuid
+    sellerOrder   SellerOrder @relation(fields: [sellerOrderId], references: [id], onDelete: Cascade)
+
+    // Frozen amounts at time of accrual
+    grossAmount      Decimal @db.Decimal(14, 2)
+    commissionAmount Decimal @default(0) @db.Decimal(14, 2)
+    refundAmount     Decimal @default(0) @db.Decimal(14, 2)
+    netAmount        Decimal @db.Decimal(14, 2)
+
+    createdAt DateTime @default(now())
+
+    @@index([payoutId])
+    @@map("seller_payout_items")
+}

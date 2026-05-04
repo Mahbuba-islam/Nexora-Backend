@@ -1,17 +1,12 @@
-import {  Router } from "express";
-import { userController } from "./user.controler";
-import { validateRequest } from "../../middleware/validateRequest";
-import { createAdminZodSchema } from "./user.validation";
+import { Router } from "express";
+
 import { checkAuth } from "../../middleware/cheackAuth";
 import { Role } from "../../generated/enums";
+import { userController } from "./user.controler";
 
+const router = Router();
 
+router.post("/admin", checkAuth(Role.ADMIN), userController.createAdmin);
+router.get("/customers", checkAuth(Role.ADMIN, Role.STAFF), userController.getAllCustomers);
 
-
-
-const router = Router()
-
-router.get("/clients", checkAuth(Role.ADMIN), userController.getAllClients)
-router.post("/create-admin", validateRequest(createAdminZodSchema), checkAuth(Role.ADMIN), userController.createAdmin)
-
-export const userRouter = router
+export const userRouter = router;

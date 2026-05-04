@@ -6,24 +6,9 @@ import { PaymentController } from "./payment.controler";
 const router = Router();
 
 router.post(
-	"/consultation/confirm-success",
-	checkAuth(Role.CLIENT, Role.ADMIN),
-	PaymentController.confirmConsultationPaymentSuccess
-);
-router.post(
-	"/consultation/confirm",
-	checkAuth(Role.CLIENT, Role.ADMIN),
-	PaymentController.confirmConsultationPaymentSuccess
-);
-router.get(
-	"/consultation/confirm-success",
-	checkAuth(Role.CLIENT, Role.ADMIN),
-	PaymentController.confirmConsultationPaymentSuccess
-);
-router.get(
-	"/consultation/confirm",
-	checkAuth(Role.CLIENT, Role.ADMIN),
-	PaymentController.confirmConsultationPaymentSuccess
+  "/orders/:orderId/intent",
+  checkAuth(Role.CUSTOMER, Role.ADMIN, Role.STAFF),
+  PaymentController.createPaymentIntent
 );
 
 export const PaymentRoutes = router;

@@ -1,15 +1,18 @@
-import express from 'express';
-import { checkAuth } from '../../middleware/cheackAuth';
-import { Role } from '../../generated/enums';
-import { StatsController } from './stats.controler';
+import { Router } from "express";
+import { checkAuth } from "../../middleware/cheackAuth";
+import { Role } from "../../generated/enums";
+import { statsController } from "./stats.controler";
 
-const router = express.Router();
+const router = Router();
 
-router.get(
-    '/',
-    checkAuth(Role.ADMIN, Role.EXPERT, Role.CLIENT), // Only allow authenticated users with these roles
-    StatsController.getDashboardStatsData
-)
+router.use(checkAuth(Role.ADMIN, Role.STAFF));
 
+router.get("/overview", statsController.overview);
+router.get("/recent-orders", statsController.recentOrders);
+router.get("/top-products", statsController.topProducts);
+router.get("/revenue", statsController.revenueByDay);
+router.get("/marketplace", statsController.marketplace);
+router.get("/top-sellers", statsController.topSellers);
+router.get("/payout-pipeline", statsController.payoutPipeline);
 
 export const StatsRoutes = router;

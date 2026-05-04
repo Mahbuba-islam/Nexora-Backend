@@ -11,6 +11,7 @@ import { envVars } from "./config/env";
 
 import { globalErrorHandler } from "./middleware/globalErrorHandler";
 import { notFound } from "./middleware/notFound";
+import { apiLimiter } from "./middleware/rateLimiter";
 import { indexRoutes } from ".";
 import { PaymentController } from "./modules/payment/payment.controler";
 import { authRoutes } from "./modules/auth/auth.router";
@@ -65,7 +66,7 @@ app.use("/api/auth", toNodeHandler(auth));
    Basic Health Route
 -------------------------------------------- */
 app.get("/", (req: Request, res: Response) => {
-  res.send("ConsultEdge Backend Running Successfully!");
+  res.send("Nexora Backend Running Successfully!");
 });
 
 /* -------------------------------------------
@@ -86,9 +87,11 @@ app.get("/healthz", (_req: Request, res: Response) => {
 
 /* -------------------------------------------
    API Routes
+   - apiLimiter is mounted only on /api/v1 so health checks,
+     static assets, and the Stripe webhook are never throttled.
 -------------------------------------------- */
 app.use("/auth", authRoutes);
-app.use("/api/v1", indexRoutes);
+app.use("/api/v1", apiLimiter, indexRoutes);
 
 /* -------------------------------------------
    Global Error Handler + 404

@@ -1,18 +1,26 @@
+// =============================================================
+// Nexora — Coupons / Promotions
+// =============================================================
+
 model Coupon {
     id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-    code         String             @unique
+    code         String             @unique @db.VarChar(40)
     description  String?
     discountType CouponDiscountType
-    // For PERCENT: 1-100. For FIXED: absolute amount in same currency as fee.
-    discountValue Float
+    // For PERCENT: 1-100. For FIXED / FREE_SHIPPING: absolute amount.
+    discountValue Decimal @db.Decimal(12, 2)
 
     // Optional cap for percent discounts (e.g. 20% off up to $50).
-    maxDiscount Float?
+    maxDiscount Decimal? @db.Decimal(12, 2)
 
-    // Optional minimum cart amount required to redeem.
-    minAmount Float?
+    // Optional minimum cart subtotal required.
+    minAmount Decimal? @db.Decimal(12, 2)
 
+    // Per-user usage cap (null = unlimited)
+    perUserLimit Int?
+
+    startsAt  DateTime?
     expiresAt DateTime?
     maxUses   Int?
     usedCount Int       @default(0)

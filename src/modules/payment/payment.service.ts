@@ -152,6 +152,20 @@ const handleStripeWebhookEvent = async (rawBody: Buffer, signature: string) => {
       }
       break;
     }
+    case "account.updated": {
+      const account = event.data.object as Stripe.Account;
+      const { stripeConnectService } = await import(
+        "../stripeConnect/stripeConnect.service"
+      );
+      await stripeConnectService.onAccountUpdated(account).catch(() => null);
+      break;
+    }
+    case "charge.refunded": {
+      // Stripe sometimes posts charge.refunded after our refunds.create call;
+      // we already persist completion in refundService.processRefund, so this
+      // is a no-op safety net for refunds initiated outside the app.
+      break;
+    }
     default:
       break;
   }

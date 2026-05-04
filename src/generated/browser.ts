@@ -168,6 +168,16 @@ export type ProductQuestion = Prisma.ProductQuestionModel
  */
 export type ProductAnswer = Prisma.ProductAnswerModel
 /**
+ * Model Refund
+ * 
+ */
+export type Refund = Prisma.RefundModel
+/**
+ * Model RefundItem
+ * 
+ */
+export type RefundItem = Prisma.RefundItemModel
+/**
  * Model Review
  * 
  */

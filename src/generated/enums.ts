@@ -185,6 +185,31 @@ export const AddressType = {
 export type AddressType = (typeof AddressType)[keyof typeof AddressType]
 
 
+export const RefundStatus = {
+  REQUESTED: 'REQUESTED',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  PROCESSING: 'PROCESSING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED'
+} as const
+
+export type RefundStatus = (typeof RefundStatus)[keyof typeof RefundStatus]
+
+
+export const RefundReason = {
+  DAMAGED: 'DAMAGED',
+  DEFECTIVE: 'DEFECTIVE',
+  WRONG_ITEM: 'WRONG_ITEM',
+  NOT_AS_DESCRIBED: 'NOT_AS_DESCRIBED',
+  NO_LONGER_NEEDED: 'NO_LONGER_NEEDED',
+  LATE_DELIVERY: 'LATE_DELIVERY',
+  OTHER: 'OTHER'
+} as const
+
+export type RefundReason = (typeof RefundReason)[keyof typeof RefundReason]
+
+
 export const ReviewStatus = {
   PENDING: 'PENDING',
   APPROVED: 'APPROVED',
@@ -252,6 +277,10 @@ export const NotificationType = {
   PAYOUT_INITIATED: 'PAYOUT_INITIATED',
   PAYOUT_PAID: 'PAYOUT_PAID',
   PAYOUT_FAILED: 'PAYOUT_FAILED',
+  REFUND_REQUESTED: 'REFUND_REQUESTED',
+  REFUND_APPROVED: 'REFUND_APPROVED',
+  REFUND_REJECTED: 'REFUND_REJECTED',
+  REFUND_COMPLETED: 'REFUND_COMPLETED',
   NEW_SELLER_APPLICATION: 'NEW_SELLER_APPLICATION'
 } as const
 

@@ -414,6 +414,8 @@ export const ModelName = {
   ProductTag: 'ProductTag',
   ProductQuestion: 'ProductQuestion',
   ProductAnswer: 'ProductAnswer',
+  Refund: 'Refund',
+  RefundItem: 'RefundItem',
   Review: 'Review',
   ReviewImage: 'ReviewImage',
   Seller: 'Seller',
@@ -434,7 +436,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "address" | "admin" | "aIConversation" | "aIChatMessage" | "user" | "session" | "account" | "verification" | "brand" | "cart" | "cartItem" | "category" | "coupon" | "customer" | "notification" | "order" | "orderItem" | "orderStatusHistory" | "sellerOrder" | "sellerOrderStatusHistory" | "payment" | "sellerPayout" | "sellerPayoutItem" | "product" | "productImage" | "productVariant" | "productSpecification" | "productTag" | "productQuestion" | "productAnswer" | "review" | "reviewImage" | "seller" | "wishlist" | "wishlistItem"
+    modelProps: "address" | "admin" | "aIConversation" | "aIChatMessage" | "user" | "session" | "account" | "verification" | "brand" | "cart" | "cartItem" | "category" | "coupon" | "customer" | "notification" | "order" | "orderItem" | "orderStatusHistory" | "sellerOrder" | "sellerOrderStatusHistory" | "payment" | "sellerPayout" | "sellerPayoutItem" | "product" | "productImage" | "productVariant" | "productSpecification" | "productTag" | "productQuestion" | "productAnswer" | "refund" | "refundItem" | "review" | "reviewImage" | "seller" | "wishlist" | "wishlistItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2658,6 +2660,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Refund: {
+      payload: Prisma.$RefundPayload<ExtArgs>
+      fields: Prisma.RefundFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RefundFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RefundFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundPayload>
+        }
+        findFirst: {
+          args: Prisma.RefundFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RefundFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundPayload>
+        }
+        findMany: {
+          args: Prisma.RefundFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundPayload>[]
+        }
+        create: {
+          args: Prisma.RefundCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundPayload>
+        }
+        createMany: {
+          args: Prisma.RefundCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RefundCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundPayload>[]
+        }
+        delete: {
+          args: Prisma.RefundDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundPayload>
+        }
+        update: {
+          args: Prisma.RefundUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundPayload>
+        }
+        deleteMany: {
+          args: Prisma.RefundDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RefundUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RefundUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundPayload>[]
+        }
+        upsert: {
+          args: Prisma.RefundUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundPayload>
+        }
+        aggregate: {
+          args: Prisma.RefundAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRefund>
+        }
+        groupBy: {
+          args: Prisma.RefundGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RefundGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RefundCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RefundCountAggregateOutputType> | number
+        }
+      }
+    }
+    RefundItem: {
+      payload: Prisma.$RefundItemPayload<ExtArgs>
+      fields: Prisma.RefundItemFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RefundItemFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundItemPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RefundItemFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundItemPayload>
+        }
+        findFirst: {
+          args: Prisma.RefundItemFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundItemPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RefundItemFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundItemPayload>
+        }
+        findMany: {
+          args: Prisma.RefundItemFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundItemPayload>[]
+        }
+        create: {
+          args: Prisma.RefundItemCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundItemPayload>
+        }
+        createMany: {
+          args: Prisma.RefundItemCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RefundItemCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundItemPayload>[]
+        }
+        delete: {
+          args: Prisma.RefundItemDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundItemPayload>
+        }
+        update: {
+          args: Prisma.RefundItemUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundItemPayload>
+        }
+        deleteMany: {
+          args: Prisma.RefundItemDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RefundItemUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RefundItemUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundItemPayload>[]
+        }
+        upsert: {
+          args: Prisma.RefundItemUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RefundItemPayload>
+        }
+        aggregate: {
+          args: Prisma.RefundItemAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRefundItem>
+        }
+        groupBy: {
+          args: Prisma.RefundItemGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RefundItemGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RefundItemCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RefundItemCountAggregateOutputType> | number
+        }
+      }
+    }
     Review: {
       payload: Prisma.$ReviewPayload<ExtArgs>
       fields: Prisma.ReviewFieldRefs
@@ -3625,6 +3775,45 @@ export const ProductAnswerScalarFieldEnum = {
 export type ProductAnswerScalarFieldEnum = (typeof ProductAnswerScalarFieldEnum)[keyof typeof ProductAnswerScalarFieldEnum]
 
 
+export const RefundScalarFieldEnum = {
+  id: 'id',
+  refundNumber: 'refundNumber',
+  orderId: 'orderId',
+  sellerOrderId: 'sellerOrderId',
+  sellerId: 'sellerId',
+  requestedById: 'requestedById',
+  decidedById: 'decidedById',
+  status: 'status',
+  reason: 'reason',
+  customerNote: 'customerNote',
+  decisionNote: 'decisionNote',
+  currency: 'currency',
+  requestedAmount: 'requestedAmount',
+  approvedAmount: 'approvedAmount',
+  refundedAmount: 'refundedAmount',
+  stripeRefundId: 'stripeRefundId',
+  stripeChargeId: 'stripeChargeId',
+  decidedAt: 'decidedAt',
+  completedAt: 'completedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RefundScalarFieldEnum = (typeof RefundScalarFieldEnum)[keyof typeof RefundScalarFieldEnum]
+
+
+export const RefundItemScalarFieldEnum = {
+  id: 'id',
+  refundId: 'refundId',
+  orderItemId: 'orderItemId',
+  quantity: 'quantity',
+  amount: 'amount',
+  createdAt: 'createdAt'
+} as const
+
+export type RefundItemScalarFieldEnum = (typeof RefundItemScalarFieldEnum)[keyof typeof RefundItemScalarFieldEnum]
+
+
 export const ReviewScalarFieldEnum = {
   id: 'id',
   productId: 'productId',
@@ -4115,6 +4304,34 @@ export type ListEnumProductConditionFieldRefInput<$PrismaModel> = FieldRefInputT
 
 
 /**
+ * Reference to a field of type 'RefundStatus'
+ */
+export type EnumRefundStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RefundStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'RefundStatus[]'
+ */
+export type ListEnumRefundStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RefundStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'RefundReason'
+ */
+export type EnumRefundReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RefundReason'>
+    
+
+
+/**
+ * Reference to a field of type 'RefundReason[]'
+ */
+export type ListEnumRefundReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RefundReason[]'>
+    
+
+
+/**
  * Reference to a field of type 'ReviewStatus'
  */
 export type EnumReviewStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReviewStatus'>
@@ -4294,6 +4511,8 @@ export type GlobalOmitConfig = {
   productTag?: Prisma.ProductTagOmit
   productQuestion?: Prisma.ProductQuestionOmit
   productAnswer?: Prisma.ProductAnswerOmit
+  refund?: Prisma.RefundOmit
+  refundItem?: Prisma.RefundItemOmit
   review?: Prisma.ReviewOmit
   reviewImage?: Prisma.ReviewImageOmit
   seller?: Prisma.SellerOmit

@@ -3,6 +3,7 @@ import { envVars } from "./config/env";
 import { createServer } from "node:http";
 
 import { seedAdmin, seedDemoAccounts } from "./utilis/seed";
+import { seedComprehensiveDemoData } from "./utilis/demoData";
 import { connectPrismaWithRetry, prisma } from "./lib/prisma";
 
 const httpServer = createServer(app);
@@ -75,6 +76,9 @@ const bootstrap = async() => {
         await connectPrismaWithRetry({ retries: 5, retryDelayMs: 2000 });
         await seedAdmin();
         await seedDemoAccounts();
+        await seedComprehensiveDemoData().catch((err) => {
+            console.error("[demo] comprehensive seed failed:", err?.message ?? err);
+        });
 
         await new Promise<void>((resolve, reject) => {
             httpServer.once("error", reject);

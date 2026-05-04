@@ -1,6 +1,7 @@
 import {
   indexRoutes
-} from "./chunk-KRDSIXRR.js";
+} from "./chunk-6IFKXIMT.js";
+import "./chunk-EM24WAHR.js";
 export {
   indexRoutes
 };

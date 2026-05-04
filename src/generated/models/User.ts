@@ -252,6 +252,8 @@ export type UserWhereInput = {
   aiConversations?: Prisma.AIConversationListRelationFilter
   productQuestions?: Prisma.ProductQuestionListRelationFilter
   productAnswers?: Prisma.ProductAnswerListRelationFilter
+  refundsRequested?: Prisma.RefundListRelationFilter
+  refundsDecided?: Prisma.RefundListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -281,6 +283,8 @@ export type UserOrderByWithRelationInput = {
   aiConversations?: Prisma.AIConversationOrderByRelationAggregateInput
   productQuestions?: Prisma.ProductQuestionOrderByRelationAggregateInput
   productAnswers?: Prisma.ProductAnswerOrderByRelationAggregateInput
+  refundsRequested?: Prisma.RefundOrderByRelationAggregateInput
+  refundsDecided?: Prisma.RefundOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -313,6 +317,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   aiConversations?: Prisma.AIConversationListRelationFilter
   productQuestions?: Prisma.ProductQuestionListRelationFilter
   productAnswers?: Prisma.ProductAnswerListRelationFilter
+  refundsRequested?: Prisma.RefundListRelationFilter
+  refundsDecided?: Prisma.RefundListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -378,6 +384,8 @@ export type UserCreateInput = {
   aiConversations?: Prisma.AIConversationCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -407,6 +415,8 @@ export type UserUncheckedCreateInput = {
   aiConversations?: Prisma.AIConversationUncheckedCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionUncheckedCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerUncheckedCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundUncheckedCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUpdateInput = {
@@ -436,6 +446,8 @@ export type UserUpdateInput = {
   aiConversations?: Prisma.AIConversationUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -465,6 +477,8 @@ export type UserUncheckedUpdateInput = {
   aiConversations?: Prisma.AIConversationUncheckedUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUncheckedUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUncheckedUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUncheckedUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -731,6 +745,36 @@ export type UserUpdateOneRequiredWithoutProductAnswersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutProductAnswersInput, Prisma.UserUpdateWithoutProductAnswersInput>, Prisma.UserUncheckedUpdateWithoutProductAnswersInput>
 }
 
+export type UserCreateNestedOneWithoutRefundsRequestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutRefundsRequestedInput, Prisma.UserUncheckedCreateWithoutRefundsRequestedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRefundsRequestedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutRefundsDecidedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutRefundsDecidedInput, Prisma.UserUncheckedCreateWithoutRefundsDecidedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRefundsDecidedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutRefundsRequestedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutRefundsRequestedInput, Prisma.UserUncheckedCreateWithoutRefundsRequestedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRefundsRequestedInput
+  upsert?: Prisma.UserUpsertWithoutRefundsRequestedInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutRefundsRequestedInput, Prisma.UserUpdateWithoutRefundsRequestedInput>, Prisma.UserUncheckedUpdateWithoutRefundsRequestedInput>
+}
+
+export type UserUpdateOneWithoutRefundsDecidedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutRefundsDecidedInput, Prisma.UserUncheckedCreateWithoutRefundsDecidedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRefundsDecidedInput
+  upsert?: Prisma.UserUpsertWithoutRefundsDecidedInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutRefundsDecidedInput, Prisma.UserUpdateWithoutRefundsDecidedInput>, Prisma.UserUncheckedUpdateWithoutRefundsDecidedInput>
+}
+
 export type UserCreateNestedOneWithoutReviewsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutReviewsInput, Prisma.UserUncheckedCreateWithoutReviewsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutReviewsInput
@@ -799,6 +843,8 @@ export type UserCreateWithoutAddressesInput = {
   aiConversations?: Prisma.AIConversationCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutAddressesInput = {
@@ -827,6 +873,8 @@ export type UserUncheckedCreateWithoutAddressesInput = {
   aiConversations?: Prisma.AIConversationUncheckedCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionUncheckedCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerUncheckedCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundUncheckedCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutAddressesInput = {
@@ -871,6 +919,8 @@ export type UserUpdateWithoutAddressesInput = {
   aiConversations?: Prisma.AIConversationUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAddressesInput = {
@@ -899,6 +949,8 @@ export type UserUncheckedUpdateWithoutAddressesInput = {
   aiConversations?: Prisma.AIConversationUncheckedUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUncheckedUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUncheckedUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUncheckedUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserCreateWithoutAdminInput = {
@@ -927,6 +979,8 @@ export type UserCreateWithoutAdminInput = {
   aiConversations?: Prisma.AIConversationCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutAdminInput = {
@@ -955,6 +1009,8 @@ export type UserUncheckedCreateWithoutAdminInput = {
   aiConversations?: Prisma.AIConversationUncheckedCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionUncheckedCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerUncheckedCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundUncheckedCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutAdminInput = {
@@ -999,6 +1055,8 @@ export type UserUpdateWithoutAdminInput = {
   aiConversations?: Prisma.AIConversationUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAdminInput = {
@@ -1027,6 +1085,8 @@ export type UserUncheckedUpdateWithoutAdminInput = {
   aiConversations?: Prisma.AIConversationUncheckedUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUncheckedUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUncheckedUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUncheckedUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserCreateWithoutAiConversationsInput = {
@@ -1055,6 +1115,8 @@ export type UserCreateWithoutAiConversationsInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutAiConversationsInput = {
@@ -1083,6 +1145,8 @@ export type UserUncheckedCreateWithoutAiConversationsInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionUncheckedCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerUncheckedCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundUncheckedCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutAiConversationsInput = {
@@ -1127,6 +1191,8 @@ export type UserUpdateWithoutAiConversationsInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAiConversationsInput = {
@@ -1155,6 +1221,8 @@ export type UserUncheckedUpdateWithoutAiConversationsInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUncheckedUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUncheckedUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUncheckedUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserCreateWithoutSessionsInput = {
@@ -1183,6 +1251,8 @@ export type UserCreateWithoutSessionsInput = {
   aiConversations?: Prisma.AIConversationCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -1211,6 +1281,8 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   aiConversations?: Prisma.AIConversationUncheckedCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionUncheckedCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerUncheckedCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundUncheckedCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -1255,6 +1327,8 @@ export type UserUpdateWithoutSessionsInput = {
   aiConversations?: Prisma.AIConversationUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -1283,6 +1357,8 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   aiConversations?: Prisma.AIConversationUncheckedUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUncheckedUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUncheckedUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUncheckedUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserCreateWithoutAccountsInput = {
@@ -1311,6 +1387,8 @@ export type UserCreateWithoutAccountsInput = {
   aiConversations?: Prisma.AIConversationCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutAccountsInput = {
@@ -1339,6 +1417,8 @@ export type UserUncheckedCreateWithoutAccountsInput = {
   aiConversations?: Prisma.AIConversationUncheckedCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionUncheckedCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerUncheckedCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundUncheckedCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutAccountsInput = {
@@ -1383,6 +1463,8 @@ export type UserUpdateWithoutAccountsInput = {
   aiConversations?: Prisma.AIConversationUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAccountsInput = {
@@ -1411,6 +1493,8 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   aiConversations?: Prisma.AIConversationUncheckedUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUncheckedUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUncheckedUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUncheckedUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserCreateWithoutCartsInput = {
@@ -1439,6 +1523,8 @@ export type UserCreateWithoutCartsInput = {
   aiConversations?: Prisma.AIConversationCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutCartsInput = {
@@ -1467,6 +1553,8 @@ export type UserUncheckedCreateWithoutCartsInput = {
   aiConversations?: Prisma.AIConversationUncheckedCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionUncheckedCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerUncheckedCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundUncheckedCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutCartsInput = {
@@ -1511,6 +1599,8 @@ export type UserUpdateWithoutCartsInput = {
   aiConversations?: Prisma.AIConversationUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCartsInput = {
@@ -1539,6 +1629,8 @@ export type UserUncheckedUpdateWithoutCartsInput = {
   aiConversations?: Prisma.AIConversationUncheckedUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUncheckedUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUncheckedUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUncheckedUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserCreateWithoutCustomerInput = {
@@ -1567,6 +1659,8 @@ export type UserCreateWithoutCustomerInput = {
   aiConversations?: Prisma.AIConversationCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutCustomerInput = {
@@ -1595,6 +1689,8 @@ export type UserUncheckedCreateWithoutCustomerInput = {
   aiConversations?: Prisma.AIConversationUncheckedCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionUncheckedCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerUncheckedCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundUncheckedCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutCustomerInput = {
@@ -1639,6 +1735,8 @@ export type UserUpdateWithoutCustomerInput = {
   aiConversations?: Prisma.AIConversationUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCustomerInput = {
@@ -1667,6 +1765,8 @@ export type UserUncheckedUpdateWithoutCustomerInput = {
   aiConversations?: Prisma.AIConversationUncheckedUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUncheckedUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUncheckedUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUncheckedUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserCreateWithoutNotificationsInput = {
@@ -1695,6 +1795,8 @@ export type UserCreateWithoutNotificationsInput = {
   aiConversations?: Prisma.AIConversationCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutNotificationsInput = {
@@ -1723,6 +1825,8 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   aiConversations?: Prisma.AIConversationUncheckedCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionUncheckedCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerUncheckedCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundUncheckedCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutNotificationsInput = {
@@ -1767,6 +1871,8 @@ export type UserUpdateWithoutNotificationsInput = {
   aiConversations?: Prisma.AIConversationUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationsInput = {
@@ -1795,6 +1901,8 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   aiConversations?: Prisma.AIConversationUncheckedUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUncheckedUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUncheckedUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUncheckedUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserCreateWithoutOrdersInput = {
@@ -1823,6 +1931,8 @@ export type UserCreateWithoutOrdersInput = {
   aiConversations?: Prisma.AIConversationCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutOrdersInput = {
@@ -1851,6 +1961,8 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   aiConversations?: Prisma.AIConversationUncheckedCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionUncheckedCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerUncheckedCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundUncheckedCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutOrdersInput = {
@@ -1895,6 +2007,8 @@ export type UserUpdateWithoutOrdersInput = {
   aiConversations?: Prisma.AIConversationUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutOrdersInput = {
@@ -1923,6 +2037,8 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   aiConversations?: Prisma.AIConversationUncheckedUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUncheckedUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUncheckedUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUncheckedUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserCreateWithoutProductQuestionsInput = {
@@ -1951,6 +2067,8 @@ export type UserCreateWithoutProductQuestionsInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   aiConversations?: Prisma.AIConversationCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutProductQuestionsInput = {
@@ -1979,6 +2097,8 @@ export type UserUncheckedCreateWithoutProductQuestionsInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   aiConversations?: Prisma.AIConversationUncheckedCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerUncheckedCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundUncheckedCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutProductQuestionsInput = {
@@ -2023,6 +2143,8 @@ export type UserUpdateWithoutProductQuestionsInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   aiConversations?: Prisma.AIConversationUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutProductQuestionsInput = {
@@ -2051,6 +2173,8 @@ export type UserUncheckedUpdateWithoutProductQuestionsInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   aiConversations?: Prisma.AIConversationUncheckedUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUncheckedUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUncheckedUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserCreateWithoutProductAnswersInput = {
@@ -2079,6 +2203,8 @@ export type UserCreateWithoutProductAnswersInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   aiConversations?: Prisma.AIConversationCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutProductAnswersInput = {
@@ -2107,6 +2233,8 @@ export type UserUncheckedCreateWithoutProductAnswersInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   aiConversations?: Prisma.AIConversationUncheckedCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionUncheckedCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundUncheckedCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutProductAnswersInput = {
@@ -2151,6 +2279,8 @@ export type UserUpdateWithoutProductAnswersInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   aiConversations?: Prisma.AIConversationUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutProductAnswersInput = {
@@ -2179,6 +2309,280 @@ export type UserUncheckedUpdateWithoutProductAnswersInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   aiConversations?: Prisma.AIConversationUncheckedUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUncheckedUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUncheckedUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUncheckedUpdateManyWithoutDecidedByNestedInput
+}
+
+export type UserCreateWithoutRefundsRequestedInput = {
+  id: string
+  name: string
+  email: string
+  emailVerified?: boolean
+  role?: $Enums.Role
+  status?: $Enums.UserStatus
+  needPasswordChange?: boolean
+  isDeleted?: boolean
+  deletedAt?: Date | string | null
+  image?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  customer?: Prisma.CustomerCreateNestedOneWithoutUserInput
+  admin?: Prisma.AdminCreateNestedOneWithoutUserInput
+  seller?: Prisma.SellerCreateNestedOneWithoutUserInput
+  addresses?: Prisma.AddressCreateNestedManyWithoutUserInput
+  carts?: Prisma.CartCreateNestedManyWithoutUserInput
+  orders?: Prisma.OrderCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
+  wishlist?: Prisma.WishlistCreateNestedOneWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  aiConversations?: Prisma.AIConversationCreateNestedManyWithoutUserInput
+  productQuestions?: Prisma.ProductQuestionCreateNestedManyWithoutUserInput
+  productAnswers?: Prisma.ProductAnswerCreateNestedManyWithoutUserInput
+  refundsDecided?: Prisma.RefundCreateNestedManyWithoutDecidedByInput
+}
+
+export type UserUncheckedCreateWithoutRefundsRequestedInput = {
+  id: string
+  name: string
+  email: string
+  emailVerified?: boolean
+  role?: $Enums.Role
+  status?: $Enums.UserStatus
+  needPasswordChange?: boolean
+  isDeleted?: boolean
+  deletedAt?: Date | string | null
+  image?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  customer?: Prisma.CustomerUncheckedCreateNestedOneWithoutUserInput
+  admin?: Prisma.AdminUncheckedCreateNestedOneWithoutUserInput
+  seller?: Prisma.SellerUncheckedCreateNestedOneWithoutUserInput
+  addresses?: Prisma.AddressUncheckedCreateNestedManyWithoutUserInput
+  carts?: Prisma.CartUncheckedCreateNestedManyWithoutUserInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
+  wishlist?: Prisma.WishlistUncheckedCreateNestedOneWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  aiConversations?: Prisma.AIConversationUncheckedCreateNestedManyWithoutUserInput
+  productQuestions?: Prisma.ProductQuestionUncheckedCreateNestedManyWithoutUserInput
+  productAnswers?: Prisma.ProductAnswerUncheckedCreateNestedManyWithoutUserInput
+  refundsDecided?: Prisma.RefundUncheckedCreateNestedManyWithoutDecidedByInput
+}
+
+export type UserCreateOrConnectWithoutRefundsRequestedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutRefundsRequestedInput, Prisma.UserUncheckedCreateWithoutRefundsRequestedInput>
+}
+
+export type UserCreateWithoutRefundsDecidedInput = {
+  id: string
+  name: string
+  email: string
+  emailVerified?: boolean
+  role?: $Enums.Role
+  status?: $Enums.UserStatus
+  needPasswordChange?: boolean
+  isDeleted?: boolean
+  deletedAt?: Date | string | null
+  image?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  customer?: Prisma.CustomerCreateNestedOneWithoutUserInput
+  admin?: Prisma.AdminCreateNestedOneWithoutUserInput
+  seller?: Prisma.SellerCreateNestedOneWithoutUserInput
+  addresses?: Prisma.AddressCreateNestedManyWithoutUserInput
+  carts?: Prisma.CartCreateNestedManyWithoutUserInput
+  orders?: Prisma.OrderCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutUserInput
+  wishlist?: Prisma.WishlistCreateNestedOneWithoutUserInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  aiConversations?: Prisma.AIConversationCreateNestedManyWithoutUserInput
+  productQuestions?: Prisma.ProductQuestionCreateNestedManyWithoutUserInput
+  productAnswers?: Prisma.ProductAnswerCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundCreateNestedManyWithoutRequestedByInput
+}
+
+export type UserUncheckedCreateWithoutRefundsDecidedInput = {
+  id: string
+  name: string
+  email: string
+  emailVerified?: boolean
+  role?: $Enums.Role
+  status?: $Enums.UserStatus
+  needPasswordChange?: boolean
+  isDeleted?: boolean
+  deletedAt?: Date | string | null
+  image?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  customer?: Prisma.CustomerUncheckedCreateNestedOneWithoutUserInput
+  admin?: Prisma.AdminUncheckedCreateNestedOneWithoutUserInput
+  seller?: Prisma.SellerUncheckedCreateNestedOneWithoutUserInput
+  addresses?: Prisma.AddressUncheckedCreateNestedManyWithoutUserInput
+  carts?: Prisma.CartUncheckedCreateNestedManyWithoutUserInput
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutUserInput
+  wishlist?: Prisma.WishlistUncheckedCreateNestedOneWithoutUserInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  aiConversations?: Prisma.AIConversationUncheckedCreateNestedManyWithoutUserInput
+  productQuestions?: Prisma.ProductQuestionUncheckedCreateNestedManyWithoutUserInput
+  productAnswers?: Prisma.ProductAnswerUncheckedCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundUncheckedCreateNestedManyWithoutRequestedByInput
+}
+
+export type UserCreateOrConnectWithoutRefundsDecidedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutRefundsDecidedInput, Prisma.UserUncheckedCreateWithoutRefundsDecidedInput>
+}
+
+export type UserUpsertWithoutRefundsRequestedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutRefundsRequestedInput, Prisma.UserUncheckedUpdateWithoutRefundsRequestedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutRefundsRequestedInput, Prisma.UserUncheckedCreateWithoutRefundsRequestedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutRefundsRequestedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutRefundsRequestedInput, Prisma.UserUncheckedUpdateWithoutRefundsRequestedInput>
+}
+
+export type UserUpdateWithoutRefundsRequestedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  needPasswordChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  customer?: Prisma.CustomerUpdateOneWithoutUserNestedInput
+  admin?: Prisma.AdminUpdateOneWithoutUserNestedInput
+  seller?: Prisma.SellerUpdateOneWithoutUserNestedInput
+  addresses?: Prisma.AddressUpdateManyWithoutUserNestedInput
+  carts?: Prisma.CartUpdateManyWithoutUserNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
+  wishlist?: Prisma.WishlistUpdateOneWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  aiConversations?: Prisma.AIConversationUpdateManyWithoutUserNestedInput
+  productQuestions?: Prisma.ProductQuestionUpdateManyWithoutUserNestedInput
+  productAnswers?: Prisma.ProductAnswerUpdateManyWithoutUserNestedInput
+  refundsDecided?: Prisma.RefundUpdateManyWithoutDecidedByNestedInput
+}
+
+export type UserUncheckedUpdateWithoutRefundsRequestedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  needPasswordChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  customer?: Prisma.CustomerUncheckedUpdateOneWithoutUserNestedInput
+  admin?: Prisma.AdminUncheckedUpdateOneWithoutUserNestedInput
+  seller?: Prisma.SellerUncheckedUpdateOneWithoutUserNestedInput
+  addresses?: Prisma.AddressUncheckedUpdateManyWithoutUserNestedInput
+  carts?: Prisma.CartUncheckedUpdateManyWithoutUserNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
+  wishlist?: Prisma.WishlistUncheckedUpdateOneWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  aiConversations?: Prisma.AIConversationUncheckedUpdateManyWithoutUserNestedInput
+  productQuestions?: Prisma.ProductQuestionUncheckedUpdateManyWithoutUserNestedInput
+  productAnswers?: Prisma.ProductAnswerUncheckedUpdateManyWithoutUserNestedInput
+  refundsDecided?: Prisma.RefundUncheckedUpdateManyWithoutDecidedByNestedInput
+}
+
+export type UserUpsertWithoutRefundsDecidedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutRefundsDecidedInput, Prisma.UserUncheckedUpdateWithoutRefundsDecidedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutRefundsDecidedInput, Prisma.UserUncheckedCreateWithoutRefundsDecidedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutRefundsDecidedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutRefundsDecidedInput, Prisma.UserUncheckedUpdateWithoutRefundsDecidedInput>
+}
+
+export type UserUpdateWithoutRefundsDecidedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  needPasswordChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  customer?: Prisma.CustomerUpdateOneWithoutUserNestedInput
+  admin?: Prisma.AdminUpdateOneWithoutUserNestedInput
+  seller?: Prisma.SellerUpdateOneWithoutUserNestedInput
+  addresses?: Prisma.AddressUpdateManyWithoutUserNestedInput
+  carts?: Prisma.CartUpdateManyWithoutUserNestedInput
+  orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutUserNestedInput
+  wishlist?: Prisma.WishlistUpdateOneWithoutUserNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  aiConversations?: Prisma.AIConversationUpdateManyWithoutUserNestedInput
+  productQuestions?: Prisma.ProductQuestionUpdateManyWithoutUserNestedInput
+  productAnswers?: Prisma.ProductAnswerUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUpdateManyWithoutRequestedByNestedInput
+}
+
+export type UserUncheckedUpdateWithoutRefundsDecidedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  needPasswordChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  customer?: Prisma.CustomerUncheckedUpdateOneWithoutUserNestedInput
+  admin?: Prisma.AdminUncheckedUpdateOneWithoutUserNestedInput
+  seller?: Prisma.SellerUncheckedUpdateOneWithoutUserNestedInput
+  addresses?: Prisma.AddressUncheckedUpdateManyWithoutUserNestedInput
+  carts?: Prisma.CartUncheckedUpdateManyWithoutUserNestedInput
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutUserNestedInput
+  wishlist?: Prisma.WishlistUncheckedUpdateOneWithoutUserNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  aiConversations?: Prisma.AIConversationUncheckedUpdateManyWithoutUserNestedInput
+  productQuestions?: Prisma.ProductQuestionUncheckedUpdateManyWithoutUserNestedInput
+  productAnswers?: Prisma.ProductAnswerUncheckedUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUncheckedUpdateManyWithoutRequestedByNestedInput
 }
 
 export type UserCreateWithoutReviewsInput = {
@@ -2207,6 +2611,8 @@ export type UserCreateWithoutReviewsInput = {
   aiConversations?: Prisma.AIConversationCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutReviewsInput = {
@@ -2235,6 +2641,8 @@ export type UserUncheckedCreateWithoutReviewsInput = {
   aiConversations?: Prisma.AIConversationUncheckedCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionUncheckedCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerUncheckedCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundUncheckedCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutReviewsInput = {
@@ -2279,6 +2687,8 @@ export type UserUpdateWithoutReviewsInput = {
   aiConversations?: Prisma.AIConversationUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReviewsInput = {
@@ -2307,6 +2717,8 @@ export type UserUncheckedUpdateWithoutReviewsInput = {
   aiConversations?: Prisma.AIConversationUncheckedUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUncheckedUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUncheckedUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUncheckedUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserCreateWithoutSellerInput = {
@@ -2335,6 +2747,8 @@ export type UserCreateWithoutSellerInput = {
   aiConversations?: Prisma.AIConversationCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutSellerInput = {
@@ -2363,6 +2777,8 @@ export type UserUncheckedCreateWithoutSellerInput = {
   aiConversations?: Prisma.AIConversationUncheckedCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionUncheckedCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerUncheckedCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundUncheckedCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutSellerInput = {
@@ -2407,6 +2823,8 @@ export type UserUpdateWithoutSellerInput = {
   aiConversations?: Prisma.AIConversationUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSellerInput = {
@@ -2435,6 +2853,8 @@ export type UserUncheckedUpdateWithoutSellerInput = {
   aiConversations?: Prisma.AIConversationUncheckedUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUncheckedUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUncheckedUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUncheckedUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserCreateWithoutWishlistInput = {
@@ -2463,6 +2883,8 @@ export type UserCreateWithoutWishlistInput = {
   aiConversations?: Prisma.AIConversationCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutWishlistInput = {
@@ -2491,6 +2913,8 @@ export type UserUncheckedCreateWithoutWishlistInput = {
   aiConversations?: Prisma.AIConversationUncheckedCreateNestedManyWithoutUserInput
   productQuestions?: Prisma.ProductQuestionUncheckedCreateNestedManyWithoutUserInput
   productAnswers?: Prisma.ProductAnswerUncheckedCreateNestedManyWithoutUserInput
+  refundsRequested?: Prisma.RefundUncheckedCreateNestedManyWithoutRequestedByInput
+  refundsDecided?: Prisma.RefundUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutWishlistInput = {
@@ -2535,6 +2959,8 @@ export type UserUpdateWithoutWishlistInput = {
   aiConversations?: Prisma.AIConversationUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutWishlistInput = {
@@ -2563,6 +2989,8 @@ export type UserUncheckedUpdateWithoutWishlistInput = {
   aiConversations?: Prisma.AIConversationUncheckedUpdateManyWithoutUserNestedInput
   productQuestions?: Prisma.ProductQuestionUncheckedUpdateManyWithoutUserNestedInput
   productAnswers?: Prisma.ProductAnswerUncheckedUpdateManyWithoutUserNestedInput
+  refundsRequested?: Prisma.RefundUncheckedUpdateManyWithoutRequestedByNestedInput
+  refundsDecided?: Prisma.RefundUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 
@@ -2581,6 +3009,8 @@ export type UserCountOutputType = {
   aiConversations: number
   productQuestions: number
   productAnswers: number
+  refundsRequested: number
+  refundsDecided: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2594,6 +3024,8 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   aiConversations?: boolean | UserCountOutputTypeCountAiConversationsArgs
   productQuestions?: boolean | UserCountOutputTypeCountProductQuestionsArgs
   productAnswers?: boolean | UserCountOutputTypeCountProductAnswersArgs
+  refundsRequested?: boolean | UserCountOutputTypeCountRefundsRequestedArgs
+  refundsDecided?: boolean | UserCountOutputTypeCountRefundsDecidedArgs
 }
 
 /**
@@ -2676,6 +3108,20 @@ export type UserCountOutputTypeCountProductAnswersArgs<ExtArgs extends runtime.T
   where?: Prisma.ProductAnswerWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountRefundsRequestedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RefundWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountRefundsDecidedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RefundWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2704,6 +3150,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   aiConversations?: boolean | Prisma.User$aiConversationsArgs<ExtArgs>
   productQuestions?: boolean | Prisma.User$productQuestionsArgs<ExtArgs>
   productAnswers?: boolean | Prisma.User$productAnswersArgs<ExtArgs>
+  refundsRequested?: boolean | Prisma.User$refundsRequestedArgs<ExtArgs>
+  refundsDecided?: boolean | Prisma.User$refundsDecidedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -2768,6 +3216,8 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   aiConversations?: boolean | Prisma.User$aiConversationsArgs<ExtArgs>
   productQuestions?: boolean | Prisma.User$productQuestionsArgs<ExtArgs>
   productAnswers?: boolean | Prisma.User$productAnswersArgs<ExtArgs>
+  refundsRequested?: boolean | Prisma.User$refundsRequestedArgs<ExtArgs>
+  refundsDecided?: boolean | Prisma.User$refundsDecidedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -2790,6 +3240,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     aiConversations: Prisma.$AIConversationPayload<ExtArgs>[]
     productQuestions: Prisma.$ProductQuestionPayload<ExtArgs>[]
     productAnswers: Prisma.$ProductAnswerPayload<ExtArgs>[]
+    refundsRequested: Prisma.$RefundPayload<ExtArgs>[]
+    refundsDecided: Prisma.$RefundPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -3212,6 +3664,8 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   aiConversations<T extends Prisma.User$aiConversationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$aiConversationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AIConversationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   productQuestions<T extends Prisma.User$productQuestionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$productQuestionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProductQuestionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   productAnswers<T extends Prisma.User$productAnswersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$productAnswersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProductAnswerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  refundsRequested<T extends Prisma.User$refundsRequestedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$refundsRequestedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RefundPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  refundsDecided<T extends Prisma.User$refundsDecidedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$refundsDecidedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RefundPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3959,6 +4413,54 @@ export type User$productAnswersArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.ProductAnswerScalarFieldEnum | Prisma.ProductAnswerScalarFieldEnum[]
+}
+
+/**
+ * User.refundsRequested
+ */
+export type User$refundsRequestedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Refund
+   */
+  select?: Prisma.RefundSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Refund
+   */
+  omit?: Prisma.RefundOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RefundInclude<ExtArgs> | null
+  where?: Prisma.RefundWhereInput
+  orderBy?: Prisma.RefundOrderByWithRelationInput | Prisma.RefundOrderByWithRelationInput[]
+  cursor?: Prisma.RefundWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RefundScalarFieldEnum | Prisma.RefundScalarFieldEnum[]
+}
+
+/**
+ * User.refundsDecided
+ */
+export type User$refundsDecidedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Refund
+   */
+  select?: Prisma.RefundSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Refund
+   */
+  omit?: Prisma.RefundOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RefundInclude<ExtArgs> | null
+  where?: Prisma.RefundWhereInput
+  orderBy?: Prisma.RefundOrderByWithRelationInput | Prisma.RefundOrderByWithRelationInput[]
+  cursor?: Prisma.RefundWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RefundScalarFieldEnum | Prisma.RefundScalarFieldEnum[]
 }
 
 /**

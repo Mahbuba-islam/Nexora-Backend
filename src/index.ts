@@ -23,6 +23,14 @@ import { notificationRouter } from "./modules/notification/notification.route";
 import { aiRoutes } from "./modules/ai/ai.router";
 import { couponRouter } from "./modules/coupon/coupon.router";
 
+import { refundRouter } from "./modules/refund/refund.router";
+import { stripeConnectRouter } from "./modules/stripeConnect/stripeConnect.router";
+import { inventoryRouter } from "./modules/inventory/inventory.router";
+import { shippingRouter } from "./modules/shipping/shipping.router";
+import { searchRouter } from "./modules/search/search.router";
+import { productQaRouter } from "./modules/productQa/productQa.router";
+import { recommendationRouter } from "./modules/recommendation/recommendation.router";
+
 const router = Router();
 
 // Auth + Users
@@ -34,6 +42,7 @@ router.use("/admin", adminRouter);
 router.use("/categories", categoryRouter);
 router.use("/brands", brandRouter);
 router.use("/products", productRouter);
+router.use("/search", searchRouter);
 
 // Marketplace (sellers / shops)
 router.use("/sellers", sellerRouter);
@@ -47,6 +56,18 @@ router.use("/addresses", addressRouter);
 router.use("/reviews", reviewRouter);
 router.use("/wishlist", wishlistRouter);
 router.use("/coupons", couponRouter);
+
+router.use("/refunds", refundRouter);
+router.use("/inventory", inventoryRouter);
+router.use("/shipping", shippingRouter);
+
+// Q&A and recommendations are mounted at root because their paths span
+// /products/:id/... and /questions/:id/... and /for-you etc.
+router.use("/", productQaRouter);
+router.use("/recommendations", recommendationRouter);
+
+// Stripe Connect: routes under /sellers/me/* and /payouts/:id/transfer
+router.use("/", stripeConnectRouter);
 
 // Payments
 router.use("/payments", PaymentRoutes);

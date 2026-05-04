@@ -81,6 +81,8 @@ export const ModelName = {
   ProductTag: 'ProductTag',
   ProductQuestion: 'ProductQuestion',
   ProductAnswer: 'ProductAnswer',
+  Refund: 'Refund',
+  RefundItem: 'RefundItem',
   Review: 'Review',
   ReviewImage: 'ReviewImage',
   Seller: 'Seller',
@@ -660,6 +662,45 @@ export const ProductAnswerScalarFieldEnum = {
 } as const
 
 export type ProductAnswerScalarFieldEnum = (typeof ProductAnswerScalarFieldEnum)[keyof typeof ProductAnswerScalarFieldEnum]
+
+
+export const RefundScalarFieldEnum = {
+  id: 'id',
+  refundNumber: 'refundNumber',
+  orderId: 'orderId',
+  sellerOrderId: 'sellerOrderId',
+  sellerId: 'sellerId',
+  requestedById: 'requestedById',
+  decidedById: 'decidedById',
+  status: 'status',
+  reason: 'reason',
+  customerNote: 'customerNote',
+  decisionNote: 'decisionNote',
+  currency: 'currency',
+  requestedAmount: 'requestedAmount',
+  approvedAmount: 'approvedAmount',
+  refundedAmount: 'refundedAmount',
+  stripeRefundId: 'stripeRefundId',
+  stripeChargeId: 'stripeChargeId',
+  decidedAt: 'decidedAt',
+  completedAt: 'completedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RefundScalarFieldEnum = (typeof RefundScalarFieldEnum)[keyof typeof RefundScalarFieldEnum]
+
+
+export const RefundItemScalarFieldEnum = {
+  id: 'id',
+  refundId: 'refundId',
+  orderItemId: 'orderItemId',
+  quantity: 'quantity',
+  amount: 'amount',
+  createdAt: 'createdAt'
+} as const
+
+export type RefundItemScalarFieldEnum = (typeof RefundItemScalarFieldEnum)[keyof typeof RefundItemScalarFieldEnum]
 
 
 export const ReviewScalarFieldEnum = {

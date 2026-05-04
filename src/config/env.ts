@@ -51,6 +51,9 @@ GEMINI_MODEL?: string
 }
 
 const loadEnvVariables = (): EnvConfig => {
+  // Hard-required for the server to even start. Anything else is treated
+  // as optional and only warned about so the dev experience isn't blocked
+  // by a missing OAuth / Cloudinary / Stripe key during local work.
   const requiredEnvVariables = [
     "NODE_ENV",
     "PORT",
@@ -61,6 +64,14 @@ const loadEnvVariables = (): EnvConfig => {
     "REFRESH_TOKEN_SECRET",
     "ACCESS_TOKEN_EXPIRY",
     "REFRESH_TOKEN_EXPIRY",
+    "FRONTEND_URL",
+    "ADMIN_EMAIL",
+    "ADMIN_PASSWORD",
+  ];
+
+  // Optional in dev, but should be set in production. We warn loudly so
+  // they don't go unnoticed while keeping the server bootable.
+  const optionalEnvVariables = [
     "EMAIL_SENDER_SMTP_USER",
     "EMAIL_SENDER_SMTP_PASSWORD",
     "EMAIL_SENDER_SMTP_HOST",
@@ -69,25 +80,29 @@ const loadEnvVariables = (): EnvConfig => {
     "GOOGLE_CLIENT_ID",
     "GOOGLE_CLIENT_SECRET",
     "GOOGLE_CALLBACK_URL",
-    "FRONTEND_URL",
-     "CLOUDINARY_CLOUD_NAME",
-      "CLOUDINARY_API_KEY",
-     "CLOUDINARY_API_SECRET",
-      "STRIPE_SECRET_KEY",
+    "CLOUDINARY_CLOUD_NAME",
+    "CLOUDINARY_API_KEY",
+    "CLOUDINARY_API_SECRET",
+    "STRIPE_SECRET_KEY",
     "STRIPE_WEBHOOK_SECRET",
-    "ADMIN_EMAIL",
-    "ADMIN_PASSWORD"
-    
-    // "BETTER_AUTH_SESSION_TOKEN_EXPIRY",
-    // "BETTER_AUTH_SESSION_TOKEN_UPDATE_AGE"
   ];
 
   requiredEnvVariables.forEach((variable) => {
     if (!process.env[variable]) {
-      throw new AppError(status.INTERNAL_SERVER_ERROR, `Environment variable "${variable}" is required but missing in the .env file.`)
-      
+      throw new AppError(
+        status.INTERNAL_SERVER_ERROR,
+        `Environment variable "${variable}" is required but missing in the .env file.`
+      );
     }
   });
+
+  const missingOptional = optionalEnvVariables.filter((v) => !process.env[v]);
+  if (missingOptional.length > 0) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[env] Optional vars missing (related features will be disabled): ${missingOptional.join(", ")}`
+    );
+  }
 
   return {
     NODE_ENV: process.env.NODE_ENV as string,

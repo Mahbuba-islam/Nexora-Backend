@@ -33,6 +33,9 @@ model User {
     productQuestions ProductQuestion[]
     productAnswers   ProductAnswer[]
 
+    refundsRequested Refund[] @relation("RefundRequestedBy")
+    refundsDecided   Refund[] @relation("RefundDecidedBy")
+
     @@unique([email])
     @@map("user")
 }

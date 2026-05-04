@@ -135,6 +135,26 @@ enum AddressType {
     BOTH
 }
 
+// ----------------- Refunds -----------------
+enum RefundStatus {
+    REQUESTED
+    APPROVED
+    REJECTED
+    PROCESSING
+    COMPLETED
+    FAILED
+}
+
+enum RefundReason {
+    DAMAGED
+    DEFECTIVE
+    WRONG_ITEM
+    NOT_AS_DESCRIBED
+    NO_LONGER_NEEDED
+    LATE_DELIVERY
+    OTHER
+}
+
 // ----------------- Reviews -----------------
 enum ReviewStatus {
     PENDING
@@ -192,6 +212,10 @@ enum NotificationType {
     PAYOUT_INITIATED
     PAYOUT_PAID
     PAYOUT_FAILED
+    REFUND_REQUESTED
+    REFUND_APPROVED
+    REFUND_REJECTED
+    REFUND_COMPLETED
     // Admin-side
     NEW_SELLER_APPLICATION
 }

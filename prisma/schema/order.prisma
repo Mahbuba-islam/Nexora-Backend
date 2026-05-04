@@ -53,6 +53,7 @@ model Order {
     history   OrderStatusHistory[]
     cart      Cart?
     sellerOrders SellerOrder[]
+    refunds   Refund[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -95,6 +96,7 @@ model OrderItem {
     lineTotal    Decimal @db.Decimal(12, 2)
 
     reviews Review[]
+    refundItems RefundItem[]
 
     createdAt DateTime @default(now())
 
@@ -175,6 +177,7 @@ model SellerOrder {
     items       OrderItem[]
     history     SellerOrderStatusHistory[]
     payoutItem  SellerPayoutItem?
+    refunds     Refund[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

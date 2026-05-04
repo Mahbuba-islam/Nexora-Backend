@@ -5,14 +5,14 @@
 
 services:
   - type: web
-    name: consultedge-backend
+    name: nexora-backend
     runtime: node
     plan: free
     region: oregon
     branch: main
     autoDeploy: true
     healthCheckPath: /healthz
-    buildCommand: npm ci && npm run build && npx prisma migrate deploy
+    buildCommand: npm ci && npx prisma generate && npm run build && npx prisma migrate deploy
     startCommand: npm start
     envVars:
       - key: NODE_ENV

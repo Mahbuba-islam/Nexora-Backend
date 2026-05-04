@@ -9,6 +9,7 @@ import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import { envVars } from "../../config/env";
 import { Role, UserStatus } from "../../generated/enums";
+import { DEMO_ACCOUNTS, DemoRoleKey, seedDemoAccounts } from "../../utilis/seed";
 import { IRequestUser } from "../../interfaces/requestUser.interface";
 import {
   IChangePasswordPayload,
@@ -420,9 +421,27 @@ const updateProfile = async (user: IRequestUser, payload: IUpdateProfilePayload)
   return updatedUser;
 };
 
+// ----------------- Demo Login -----------------
+const loginDemo = async (role: DemoRoleKey) => {
+  const cfg = DEMO_ACCOUNTS[role];
+  if (!cfg) {
+    throw new AppError(status.BAD_REQUEST, "Invalid demo role");
+  }
+
+  // Self-heal: if a previous run failed mid-seed (user exists without
+  // matching profile), make sure profiles exist before login.
+  const existing = await prisma.user.findUnique({ where: { email: cfg.email } });
+  if (!existing) {
+    await seedDemoAccounts();
+  }
+
+  return loginUser({ email: cfg.email, password: cfg.password });
+};
+
 export const authService = {
   registerCustomer,
   loginUser,
+  loginDemo,
   getMe,
   getNewToken,
   changePassword,

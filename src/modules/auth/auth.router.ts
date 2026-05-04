@@ -22,6 +22,8 @@ router.post(
   authControler.registeredUser
 );
 router.post("/login", authLimiter, validateRequest(loginZodSchema), authControler.loginUser);
+router.post("/demo-login", authLimiter, authControler.demoLogin);
+router.post("/demo-login/:role", authLimiter, authControler.demoLogin);
 router.get("/me", checkAuth(), authControler.getMe);
 router.post("/refresh-token", authControler.getNewToken);
 router.post(

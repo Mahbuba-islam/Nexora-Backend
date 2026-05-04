@@ -2,7 +2,7 @@ import app from "./app";
 import { envVars } from "./config/env";
 import { createServer } from "node:http";
 
-import { seedAdmin } from "./utilis/seed";
+import { seedAdmin, seedDemoAccounts } from "./utilis/seed";
 import { connectPrismaWithRetry, prisma } from "./lib/prisma";
 
 const httpServer = createServer(app);
@@ -74,6 +74,7 @@ const bootstrap = async() => {
     try {
         await connectPrismaWithRetry({ retries: 5, retryDelayMs: 2000 });
         await seedAdmin();
+        await seedDemoAccounts();
 
         await new Promise<void>((resolve, reject) => {
             httpServer.once("error", reject);

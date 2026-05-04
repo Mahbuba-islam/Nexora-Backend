@@ -186,20 +186,29 @@ export const auth = betterAuth({
         // Backend routes call Better Auth APIs server-to-server (no browser Origin header).
         // Keep CORS as the browser boundary and bypass Better Auth's Origin-based CSRF check.
         disableCSRFCheck: true,
-        useSecureCookies : false,
+        // In production (Render → Vercel cross-domain) the browser will only
+        // accept Set-Cookie if Secure + SameSite=None. In dev (localhost) the
+        // browser refuses Secure cookies on http://, so flip both off.
+        useSecureCookies: envVars.NODE_ENV === "production",
+        defaultCookieAttributes: {
+            sameSite: envVars.NODE_ENV === "production" ? "none" : "lax",
+            secure: envVars.NODE_ENV === "production",
+            httpOnly: true,
+            path: "/",
+        },
         cookies:{
             state:{
                 attributes:{
-                    sameSite: "none",
-                    secure: true,
+                    sameSite: envVars.NODE_ENV === "production" ? "none" : "lax",
+                    secure: envVars.NODE_ENV === "production",
                     httpOnly: true,
                     path: "/",
                 }
             },
             sessionToken:{
                 attributes:{
-                    sameSite: "none",
-                    secure: true,
+                    sameSite: envVars.NODE_ENV === "production" ? "none" : "lax",
+                    secure: envVars.NODE_ENV === "production",
                     httpOnly: true,
                     path: "/",
                 }

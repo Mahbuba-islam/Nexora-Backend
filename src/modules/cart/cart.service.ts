@@ -53,32 +53,89 @@ const summarize = async (cartId: string) => {
 const findOrCreateCart = async ({
   userId,
   sessionToken,
+  mergeFromSessionToken,
+  onMerged,
 }: {
   userId?: string;
   sessionToken?: string;
+  mergeFromSessionToken?: string;
+  onMerged?: () => void;
 }) => {
   if (userId) {
     let cart = await prisma.cart.findFirst({
       where: { userId, status: CartStatus.ACTIVE },
     });
     if (!cart) cart = await prisma.cart.create({ data: { userId } });
+
+    // Merge a leftover guest cart from this browser into the user cart.
+    if (mergeFromSessionToken && mergeFromSessionToken !== cart.sessionToken) {
+      const guestCart = await prisma.cart.findUnique({
+        where: { sessionToken: mergeFromSessionToken },
+        include: { items: true },
+      });
+
+      if (guestCart && guestCart.userId == null && guestCart.id !== cart.id) {
+        await prisma.$transaction(async (tx) => {
+          for (const item of guestCart.items) {
+            await tx.cartItem.upsert({
+              where: {
+                cartId_productId_variantId: {
+                  cartId: cart!.id,
+                  productId: item.productId,
+                  variantId: (item.variantId ?? null) as string,
+                },
+              },
+              create: {
+                cartId: cart!.id,
+                productId: item.productId,
+                variantId: item.variantId,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+              },
+              update: { quantity: { increment: item.quantity } },
+            });
+          }
+          await tx.cart.delete({ where: { id: guestCart.id } });
+        });
+        onMerged?.();
+      } else if (guestCart && guestCart.userId == null && guestCart.id === cart.id) {
+        // edge case: same row already attached
+        onMerged?.();
+      }
+    }
+
     return cart;
   }
+
   if (sessionToken) {
     let cart = await prisma.cart.findUnique({ where: { sessionToken } });
     if (!cart) cart = await prisma.cart.create({ data: { sessionToken } });
+
+    // Defensive: if a guest cookie somehow points at a cart that has been
+    // claimed by a user, do NOT leak it. Mint a fresh guest cart.
+    if (cart.userId) {
+      cart = await prisma.cart.create({ data: { sessionToken: `${sessionToken}-${Date.now()}` } });
+    }
     return cart;
   }
+
   throw new AppError(status.BAD_REQUEST, "userId or sessionToken required");
 };
 
-const getCart = async (args: { userId?: string; sessionToken?: string }) => {
+type CartArgs = {
+  userId?: string;
+  sessionToken?: string;
+  mergeFromSessionToken?: string;
+  onMerged?: () => void;
+};
+
+const getCart = async (args: CartArgs) => {
   const cart = await findOrCreateCart(args);
   return summarize(cart.id);
 };
 
 const addItem = async (
-  args: { userId?: string; sessionToken?: string },
+  args: CartArgs,
   payload: { productId: string; variantId?: string; quantity?: number }
 ) => {
   const cart = await findOrCreateCart(args);
@@ -120,7 +177,7 @@ const addItem = async (
 };
 
 const updateItem = async (
-  args: { userId?: string; sessionToken?: string },
+  args: CartArgs,
   itemId: string,
   payload: { quantity: number }
 ) => {
@@ -142,7 +199,7 @@ const updateItem = async (
 };
 
 const removeItem = async (
-  args: { userId?: string; sessionToken?: string },
+  args: CartArgs,
   itemId: string
 ) => {
   const cart = await findOrCreateCart(args);
@@ -150,7 +207,7 @@ const removeItem = async (
   return summarize(cart.id);
 };
 
-const clearCart = async (args: { userId?: string; sessionToken?: string }) => {
+const clearCart = async (args: CartArgs) => {
   const cart = await findOrCreateCart(args);
   await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
   await prisma.cart.update({
@@ -161,7 +218,7 @@ const clearCart = async (args: { userId?: string; sessionToken?: string }) => {
 };
 
 const applyCoupon = async (
-  args: { userId?: string; sessionToken?: string },
+  args: CartArgs,
   code: string
 ) => {
   const cart = await findOrCreateCart(args);
@@ -177,7 +234,7 @@ const applyCoupon = async (
   return summarize(cart.id);
 };
 
-const removeCoupon = async (args: { userId?: string; sessionToken?: string }) => {
+const removeCoupon = async (args: CartArgs) => {
   const cart = await findOrCreateCart(args);
   await prisma.cart.update({ where: { id: cart.id }, data: { couponCode: null } });
   return summarize(cart.id);

@@ -184,6 +184,28 @@ const updateProfile = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const demoLogin = catchAsync(async (req: Request, res: Response) => {
+  const raw = (req.body?.role ?? req.params?.role ?? req.query?.role ?? "").toString().toLowerCase();
+  const role = raw as "customer" | "seller" | "admin";
+  if (!(["customer", "seller", "admin"] as const).includes(role)) {
+    throw new AppError(status.BAD_REQUEST, "role must be one of: customer, seller, admin");
+  }
+
+  const result = await authService.loginDemo(role);
+  const { accessToken, refreshToken, token, user, ...rest } = result;
+
+  tokenUtils.setAccessTokenCookie(res, accessToken);
+  tokenUtils.setRefreshTokenCookie(res, refreshToken);
+  tokenUtils.setBetterAuthSessionCookie(res, token);
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: `Demo ${role} login successful`,
+    data: { accessToken, refreshToken, token, user, role, ...rest },
+  });
+});
+
 export const authControler = {
   registeredUser,
   loginUser,
@@ -199,4 +221,5 @@ export const authControler = {
   handlerOAuthError,
   checkEmailAvailability,
   updateProfile,
+  demoLogin,
 };

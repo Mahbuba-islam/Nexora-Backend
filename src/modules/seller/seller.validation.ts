@@ -75,6 +75,26 @@ export const adminSuspendSellerSchema = z.object({
   reason: z.string().min(3).max(2000),
 });
 
+/* ---------- Admin: edit shop fields ---------- */
+export const adminUpdateSellerSchema = z.object({
+  body: z
+    .object({
+      shopName: z.string().min(2).max(120).optional(),
+      tagline: z.string().max(200).optional(),
+      description: z.string().max(5000).optional(),
+      commissionRate: z.number().min(0).max(100).optional(),
+      kycStatus: z
+        .enum(["NOT_SUBMITTED", "PENDING", "APPROVED", "REJECTED"])
+        .optional(),
+      contactEmail: z.string().email().max(160).optional(),
+      contactPhone: z.string().max(40).optional(),
+    })
+    .strict()
+    .refine((v) => Object.keys(v).length > 0, {
+      message: "At least one field is required",
+    }),
+});
+
 /* ---------- Param schemas (used with validateRequest wrapper form) ---------- */
 export const sellerIdParamSchema = z.object({
   params: z.object({
@@ -97,3 +117,4 @@ export type IUpdateMyShop = z.infer<typeof updateMyShopSchema>;
 export type IAdminApproveSeller = z.infer<typeof adminApproveSellerSchema>;
 export type IAdminRejectSeller = z.infer<typeof adminRejectSellerSchema>;
 export type IAdminSuspendSeller = z.infer<typeof adminSuspendSellerSchema>;
+export type IAdminUpdateSeller = z.infer<typeof adminUpdateSellerSchema>["body"];

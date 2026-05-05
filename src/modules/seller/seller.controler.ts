@@ -144,6 +144,39 @@ const adminReinstateSeller = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const adminGetSellerDetail = catchAsync(async (req: Request, res: Response) => {
+  const result = await sellerService.adminGetSellerDetail(req.params.id as string);
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Seller detail",
+    data: result,
+  });
+});
+
+const adminUpdateSeller = catchAsync(async (req: Request, res: Response) => {
+  const result = await sellerService.adminUpdateSeller(
+    req.params.id as string,
+    req.body
+  );
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Seller updated",
+    data: result,
+  });
+});
+
+const adminSoftDeleteSeller = catchAsync(async (req: Request, res: Response) => {
+  const result = await sellerService.adminSoftDeleteSeller(req.params.id as string);
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Seller deleted",
+    data: result,
+  });
+});
+
 export const sellerController = {
   listPublicShops,
   getPublicShopBySlug,
@@ -153,6 +186,9 @@ export const sellerController = {
   getMyDashboard,
   adminListSellers,
   adminGetSeller,
+  adminGetSellerDetail,
+  adminUpdateSeller,
+  adminSoftDeleteSeller,
   adminApproveSeller,
   adminRejectSeller,
   adminSuspendSeller,

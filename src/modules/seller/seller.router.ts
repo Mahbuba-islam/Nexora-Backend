@@ -7,6 +7,7 @@ import {
   adminApproveSellerSchema,
   adminRejectSellerSchema,
   adminSuspendSellerSchema,
+  adminUpdateSellerSchema,
   applyAsSellerSchema,
   updateMyShopSchema,
 } from "./seller.validation";

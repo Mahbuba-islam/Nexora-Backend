@@ -17,6 +17,7 @@ import type {
   IAdminApproveSeller,
   IAdminRejectSeller,
   IAdminSuspendSeller,
+  IAdminUpdateSeller,
   IApplyAsSeller,
   IUpdateMyShop,
 } from "./seller.validation";
@@ -408,6 +409,159 @@ const adminReinstateSeller = async (id: string, _adminUserId: string) => {
 };
 
 /* -------------------------------------------------------------- */
+/*  Admin: detail w/ KPIs, edit, soft-delete                      */
+/* -------------------------------------------------------------- */
+
+const adminGetSellerDetail = async (id: string) => {
+  const seller = await prisma.seller.findUnique({
+    where: { id },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          status: true,
+          createdAt: true,
+        },
+      },
+      _count: {
+        select: { products: true, sellerOrders: true, payouts: true },
+      },
+    },
+  });
+  if (!seller) throw new AppError(status.NOT_FOUND, "Seller not found");
+
+  const today = new Date();
+  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const last30 = new Date(Date.now() - 30 * 86400_000);
+
+  const [paidAgg, monthAgg, last30Agg, pendingPayouts, paidPayouts, lowStockCount, refundCount] =
+    await Promise.all([
+      prisma.sellerOrder.aggregate({
+        where: { sellerId: id, order: { paymentStatus: "PAID" } },
+        _sum: { grandTotal: true, commissionAmount: true, payoutAmount: true },
+        _count: true,
+      }),
+      prisma.sellerOrder.aggregate({
+        where: {
+          sellerId: id,
+          order: { paymentStatus: "PAID" },
+          createdAt: { gte: startOfMonth },
+        },
+        _sum: { grandTotal: true, payoutAmount: true },
+      }),
+      prisma.sellerOrder.aggregate({
+        where: {
+          sellerId: id,
+          createdAt: { gte: last30 },
+        },
+        _count: true,
+      }),
+      prisma.sellerPayout.aggregate({
+        where: { sellerId: id, status: { in: ["PENDING", "PROCESSING"] } },
+        _sum: { netAmount: true },
+        _count: true,
+      }),
+      prisma.sellerPayout.aggregate({
+        where: { sellerId: id, status: "PAID" },
+        _sum: { netAmount: true },
+        _count: true,
+      }),
+      prisma.product.count({
+        where: {
+          sellerId: id,
+          isDeleted: false,
+          trackInventory: true,
+          stock: { lte: 5 },
+        },
+      }),
+      prisma.refund.count({ where: { sellerId: id } }),
+    ]);
+
+  return {
+    seller,
+    kpis: {
+      paidOrders: paidAgg._count,
+      gmv: Number(paidAgg._sum.grandTotal ?? 0),
+      commission: Number(paidAgg._sum.commissionAmount ?? 0),
+      sellerEarnings: Number(paidAgg._sum.payoutAmount ?? 0),
+      monthGmv: Number(monthAgg._sum.grandTotal ?? 0),
+      monthEarnings: Number(monthAgg._sum.payoutAmount ?? 0),
+      ordersLast30Days: last30Agg._count,
+      pendingPayouts: {
+        count: pendingPayouts._count,
+        amount: Number(pendingPayouts._sum.netAmount ?? 0),
+      },
+      paidPayouts: {
+        count: paidPayouts._count,
+        amount: Number(paidPayouts._sum.netAmount ?? 0),
+      },
+      lowStockCount,
+      refundCount,
+    },
+  };
+};
+
+const adminUpdateSeller = async (id: string, payload: IAdminUpdateSeller) => {
+  const seller = await prisma.seller.findUnique({ where: { id } });
+  if (!seller) throw new AppError(status.NOT_FOUND, "Seller not found");
+
+  const data: Record<string, unknown> = {};
+  if (payload.shopName && payload.shopName !== seller.shopName) {
+    data.shopName = payload.shopName;
+    data.shopSlug = await ensureUniqueShopSlug(slugify(payload.shopName), seller.id);
+  }
+  for (const k of [
+    "tagline",
+    "description",
+    "commissionRate",
+    "kycStatus",
+    "contactEmail",
+    "contactPhone",
+  ] as const) {
+    if (payload[k] !== undefined) data[k] = payload[k];
+  }
+
+  return prisma.seller.update({ where: { id }, data });
+};
+
+const adminSoftDeleteSeller = async (id: string) => {
+  const seller = await prisma.seller.findUnique({ where: { id } });
+  if (!seller) throw new AppError(status.NOT_FOUND, "Seller not found");
+  if (seller.isDeleted) {
+    throw new AppError(status.CONFLICT, "Seller is already deleted");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.seller.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        status: SellerStatus.SUSPENDED,
+      },
+    });
+    await tx.product.updateMany({
+      where: { sellerId: id, isDeleted: false },
+      data: { status: "ARCHIVED" },
+    });
+  });
+
+  await notificationService
+    .createNotification({
+      userId: seller.userId,
+      type: NotificationType.SELLER_SUSPENDED,
+      title: "Your shop has been closed",
+      message:
+        "Your seller account was closed by the platform. Contact support if you believe this was a mistake.",
+    })
+    .catch(() => null);
+
+  return { id, deleted: true };
+};
+
+/* -------------------------------------------------------------- */
 /*  Seller dashboard (scoped to authenticated seller)             */
 /* -------------------------------------------------------------- */
 
@@ -504,6 +658,9 @@ export const sellerService = {
   // Admin
   adminListSellers,
   adminGetSeller,
+  adminGetSellerDetail,
+  adminUpdateSeller,
+  adminSoftDeleteSeller,
   adminApproveSeller,
   adminRejectSeller,
   adminSuspendSeller,

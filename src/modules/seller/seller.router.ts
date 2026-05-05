@@ -52,6 +52,22 @@ router.get(
   checkAuth(Role.ADMIN, Role.STAFF),
   sellerController.adminGetSeller
 );
+router.get(
+  "/admin/:id/detail",
+  checkAuth(Role.ADMIN, Role.STAFF),
+  sellerController.adminGetSellerDetail
+);
+router.patch(
+  "/admin/:id",
+  checkAuth(Role.ADMIN),
+  validateRequest(adminUpdateSellerSchema),
+  sellerController.adminUpdateSeller
+);
+router.delete(
+  "/admin/:id",
+  checkAuth(Role.ADMIN),
+  sellerController.adminSoftDeleteSeller
+);
 router.patch(
   "/admin/:id/approve",
   checkAuth(Role.ADMIN),

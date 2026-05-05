@@ -7,7 +7,7 @@ import {
   indexRoutes,
   seedAdmin,
   seedDemoAccounts
-} from "./chunk-RO6ND4WW.js";
+} from "./chunk-CICWYTX3.js";
 import {
   AddressType,
   AppError_default,

@@ -32,6 +32,7 @@ import { productQaRouter } from "./modules/productQa/productQa.router";
 import { recommendationRouter } from "./modules/recommendation/recommendation.router";
 import { adminProductRouter } from "./modules/adminProduct/adminProduct.router";
 import { adminUserRouter } from "./modules/adminUser/adminUser.router";
+import { sellerProductRouter } from "./modules/sellerProduct/sellerProduct.router";
 
 const router = Router();
 
@@ -49,6 +50,7 @@ router.use("/products", productRouter);
 router.use("/search", searchRouter);
 
 // Marketplace (sellers / shops)
+router.use("/seller/products", sellerProductRouter);
 router.use("/sellers", sellerRouter);
 
 // Commerce

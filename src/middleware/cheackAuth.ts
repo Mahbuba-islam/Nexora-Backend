@@ -251,3 +251,73 @@ export const checkAuth =
       next(error);
     }
   };
+
+/**
+ * Soft authentication. Populates `req.user` if a valid token exists, else
+ * silently continues with `req.user` undefined. Use for endpoints like
+ * `/auth/me` that should return `{ user: null }` for anonymous callers
+ * instead of 401.
+ */
+export const optionalAuth = async (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const bearerToken = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7).trim()
+      : undefined;
+    const cookieToken = CookieUtils.getCookie(req, "accessToken");
+    const accessToken = bearerToken || cookieToken;
+
+    const betterAuthSessionToken =
+      CookieUtils.getCookie(req, "better-auth.session_token") ||
+      CookieUtils.getCookie(req, "__Secure-better-auth.session_token");
+
+    let userId: string | null = null;
+
+    if (accessToken) {
+      const verified = jwtUtils.verifyToken(accessToken, envVars.ACCESS_TOKEN_SECRET);
+      if (verified.success && verified.data?.userId) {
+        userId = String(verified.data.userId);
+      }
+    }
+
+    if (!userId && (betterAuthSessionToken || authHeader)) {
+      const fallbackCookieHeader = req.headers.cookie || [
+        betterAuthSessionToken ? `better-auth.session_token=${betterAuthSessionToken}` : "",
+        betterAuthSessionToken ? `__Secure-better-auth.session_token=${betterAuthSessionToken}` : "",
+      ]
+        .filter(Boolean)
+        .join("; ");
+      const session = await auth.api
+        .getSession({
+          headers: {
+            ...(fallbackCookieHeader ? { cookie: fallbackCookieHeader } : {}),
+            ...(authHeader ? { authorization: authHeader } : {}),
+          },
+        })
+        .catch(() => null);
+      if (session?.user?.id) userId = session.user.id;
+    }
+
+    if (!userId) return next();
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.isDeleted) return next();
+    if (user.status === UserStatus.BLOCKED || user.status === UserStatus.DELETED) {
+      return next();
+    }
+
+    req.user = {
+      userId: user.id,
+      role: user.role as Role,
+      email: user.email,
+    };
+    next();
+  } catch {
+    // Soft auth never blocks the request.
+    next();
+  }
+};

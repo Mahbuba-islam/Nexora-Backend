@@ -41,6 +41,15 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getMe = catchAsync(async (req: Request, res: Response) => {
+  if (!req.user?.userId) {
+    sendResponse(res, {
+      httpStatusCode: status.OK,
+      success: true,
+      message: "Not authenticated",
+      data: { user: null },
+    });
+    return;
+  }
   const result = await authService.getMe(req.user);
   sendResponse(res, {
     httpStatusCode: status.OK,

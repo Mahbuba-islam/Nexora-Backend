@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import { authControler } from "./auth.controler";
-import { checkAuth } from "../../middleware/cheackAuth";
+import { checkAuth, optionalAuth } from "../../middleware/cheackAuth";
 import { Role } from "../../generated/enums";
 import { validateRequest } from "../../middleware/validateRequest";
 import { authLimiter } from "../../middleware/rateLimiter";
@@ -24,7 +24,7 @@ router.post(
 router.post("/login", authLimiter, validateRequest(loginZodSchema), authControler.loginUser);
 router.post("/demo-login", authLimiter, authControler.demoLogin);
 router.post("/demo-login/:role", authLimiter, authControler.demoLogin);
-router.get("/me", checkAuth(), authControler.getMe);
+router.get("/me", optionalAuth, authControler.getMe);
 router.post("/refresh-token", authControler.getNewToken);
 router.post(
   "/change-password",

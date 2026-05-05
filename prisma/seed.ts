@@ -527,7 +527,7 @@ const products: ProductSeed[] = [
     stock: 200,
     brandSlug: "anker",
     categorySlug: "tech-accessories",
-    images: [{ url: IMG("photo-1609592424823-3d6e3a0f3f02"), isPrimary: true }],
+    images: [{ url: IMG("photo-1606760227091-3dd870d97f1d"), isPrimary: true }],
   },
 
   // ============== Glow & Bloom (Beauty) ==============
@@ -691,7 +691,7 @@ const products: ProductSeed[] = [
     brandSlug: "nexora-home",
     categorySlug: "home-kitchen",
     tagSlugs: ["on-sale", "premium"],
-    images: [{ url: IMG("photo-1556909114-44e3e9399c2b"), isPrimary: true }],
+    images: [{ url: IMG("photo-1556909190-eccf4a8bf97a"), isPrimary: true }],
   },
   {
     shopSlug: "casa-nova",
@@ -733,13 +733,13 @@ const CAT_IMG_POOL: Record<string, string[]> = {
   "tech-laptops": ["photo-1517336714731-489689fd1ca8", "photo-1496181133206-80ce9b88a853", "photo-1593642632559-0c6d3fc62b89", "photo-1525547719571-a2d4ac8945e2"],
   "tech-audio": ["photo-1583394838336-acd977736f90", "photo-1545127398-14699f92334b", "photo-1546435770-a3e426bf472b", "photo-1558379852-cce0deddd9ce"],
   "tech-wearables": ["photo-1546868871-7041f2a55e12", "photo-1579586337278-3befd40fd17a", "photo-1523275335684-37898b6baf30", "photo-1508685096489-7aacd43bd3b1"],
-  "tech-accessories": ["photo-1609592424823-3d6e3a0f3f02", "photo-1606760227091-3dd870d97f1d", "photo-1583863788434-e58a36330cf0", "photo-1572569511254-d8f925fe2cbb"],
+  "tech-accessories": ["photo-1606760227091-3dd870d97f1d", "photo-1583863788434-e58a36330cf0", "photo-1572569511254-d8f925fe2cbb", "photo-1625466997186-aa6d2a8ee39b"],
   "beauty-skincare": ["photo-1556228720-195a672e8a03", "photo-1620916566398-39f1143ab7be", "photo-1571781926291-c477ebfd024b", "photo-1608248543803-ba4f8c70ae0b"],
   "beauty-makeup": ["photo-1586495777744-4413f21062fa", "photo-1631214540242-3cd8c4b0b3b8", "photo-1522335789203-aaa6e0b8d96b", "photo-1512496015851-a90fb38ba796"],
   "beauty-fragrance": ["photo-1541643600914-78b084683601", "photo-1592945403244-b3fbafd7f539", "photo-1547887537-6158d64c35b3", "photo-1615634260167-c8cdede054de"],
   "beauty-hair": ["photo-1522338242992-e1a54906a8da", "photo-1526045478516-99145907023c", "photo-1571875257727-256c39da42af", "photo-1600948836101-f9ffda59d250"],
   "home-decor": ["photo-1533090481720-856c6e3c1fdc", "photo-1513519245088-0e12902e5a38", "photo-1578500494198-246f612d3b3d", "photo-1545454675-3531b543be5d"],
-  "home-kitchen": ["photo-1556909114-44e3e9399c2b", "photo-1556909190-eccf4a8bf97a", "photo-1574269909862-7e1d70bb8078", "photo-1607894007-d35d40e1e0db"],
+  "home-kitchen": ["photo-1556909190-eccf4a8bf97a", "photo-1574269909862-7e1d70bb8078", "photo-1607894007-d35d40e1e0db", "photo-1556910103-1c02745aae4d"],
   "home-bedding": ["photo-1505691938895-1758d7feb511", "photo-1540518614846-7eded433c457", "photo-1522771930-78848d9293e8", "photo-1505693416388-ac5ce068fe85"],
 };
 

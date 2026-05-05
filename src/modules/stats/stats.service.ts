@@ -4,6 +4,7 @@ import {
   OrderStatus,
   PaymentStatus,
   PayoutStatus,
+  ProductStatus,
   Role,
   SellerStatus,
 } from "../../generated/enums";
@@ -231,4 +232,200 @@ const payoutPipeline = async () => {
   };
 };
 
-export const statsService = { overview, recentOrders, topProducts, revenueByDay, marketplace, topSellers, payoutPipeline };
+/* ============================================================
+ * Analytics page (Temu/Amazon-style admin analytics)
+ * ============================================================ */
+
+const ordersTimeseries = async (days = 30) => {
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  const orders = await prisma.order.findMany({
+    where: { placedAt: { gte: since } },
+    select: { placedAt: true, status: true, paymentStatus: true, grandTotal: true },
+  });
+
+  const buckets: Record<string, { date: string; orders: number; paidOrders: number; revenue: number }> = {};
+  for (const o of orders) {
+    const day = o.placedAt.toISOString().slice(0, 10);
+    if (!buckets[day]) buckets[day] = { date: day, orders: 0, paidOrders: 0, revenue: 0 };
+    buckets[day].orders += 1;
+    if (o.paymentStatus === PaymentStatus.PAID) {
+      buckets[day].paidOrders += 1;
+      buckets[day].revenue += toNumber(o.grandTotal);
+    }
+  }
+
+  return Object.values(buckets)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((b) => ({ ...b, revenue: Math.round(b.revenue * 100) / 100 }));
+};
+
+const salesByCategory = async (limit = 10) => {
+  const rows = await prisma.$queryRawUnsafe<
+    { category_id: string; category_name: string; units: bigint; revenue: string }[]
+  >(`
+    SELECT c.id AS category_id, c.name AS category_name,
+           SUM(oi.quantity)::bigint AS units,
+           SUM(oi."lineTotal")::numeric AS revenue
+    FROM order_items oi
+    JOIN orders o ON o.id = oi."orderId"
+    JOIN products p ON p.id = oi."productId"
+    JOIN categories c ON c.id = p."categoryId"
+    WHERE o."paymentStatus" = 'PAID'
+    GROUP BY c.id, c.name
+    ORDER BY revenue DESC
+    LIMIT ${Math.min(50, Math.max(1, limit))}
+  `);
+
+  return rows.map((r) => ({
+    categoryId: r.category_id,
+    categoryName: r.category_name,
+    units: Number(r.units),
+    revenue: Math.round(Number(r.revenue) * 100) / 100,
+  }));
+};
+
+const customerAcquisition = async (days = 30) => {
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+  const users = await prisma.user.findMany({
+    where: { role: Role.CUSTOMER, createdAt: { gte: since } },
+    select: { createdAt: true },
+  });
+  const buckets: Record<string, number> = {};
+  for (const u of users) {
+    const day = u.createdAt.toISOString().slice(0, 10);
+    buckets[day] = (buckets[day] ?? 0) + 1;
+  }
+  return Object.entries(buckets)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, count]) => ({ date, newCustomers: count }));
+};
+
+const refundMetrics = async () => {
+  const [byStatus, totalRefunded] = await Promise.all([
+    prisma.refund.groupBy({
+      by: ["status"],
+      _count: true,
+      _sum: { refundedAmount: true },
+    }),
+    prisma.refund.aggregate({
+      where: { status: "COMPLETED" },
+      _sum: { refundedAmount: true },
+    }),
+  ]);
+
+  const paidRevenue = await prisma.order.aggregate({
+    where: { paymentStatus: PaymentStatus.PAID },
+    _sum: { grandTotal: true },
+  });
+  const gmv = toNumber(paidRevenue._sum.grandTotal);
+  const refunded = toNumber(totalRefunded._sum.refundedAmount);
+
+  return {
+    byStatus: byStatus.map((r) => ({
+      status: r.status,
+      count: r._count,
+      amount: Math.round(toNumber(r._sum.refundedAmount) * 100) / 100,
+    })),
+    totalRefunded: Math.round(refunded * 100) / 100,
+    refundRate: gmv > 0 ? Math.round((refunded / gmv) * 10000) / 100 : 0,
+  };
+};
+
+const topCustomers = async (limit = 10) => {
+  const rows = await prisma.$queryRawUnsafe<
+    { user_id: string; name: string; email: string; orders: bigint; spend: string }[]
+  >(`
+    SELECT u.id AS user_id, u.name, u.email,
+           COUNT(o.id)::bigint AS orders,
+           SUM(o."grandTotal")::numeric AS spend
+    FROM "user" u
+    JOIN orders o ON o."userId" = u.id
+    WHERE o."paymentStatus" = 'PAID' AND u."isDeleted" = false
+    GROUP BY u.id, u.name, u.email
+    ORDER BY spend DESC
+    LIMIT ${Math.min(50, Math.max(1, limit))}
+  `);
+
+  return rows.map((r) => ({
+    userId: r.user_id,
+    name: r.name,
+    email: r.email,
+    orderCount: Number(r.orders),
+    lifetimeSpend: Math.round(Number(r.spend) * 100) / 100,
+  }));
+};
+
+const conversionFunnel = async (days = 30) => {
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  const [carts, abandoned, converted, paid] = await Promise.all([
+    prisma.cart.count({ where: { createdAt: { gte: since } } }),
+    prisma.cart.count({
+      where: { createdAt: { gte: since }, status: "ABANDONED" },
+    }),
+    prisma.cart.count({
+      where: { createdAt: { gte: since }, status: "CONVERTED" },
+    }),
+    prisma.order.count({
+      where: {
+        placedAt: { gte: since },
+        paymentStatus: PaymentStatus.PAID,
+      },
+    }),
+  ]);
+
+  return {
+    carts,
+    abandoned,
+    converted,
+    paidOrders: paid,
+    conversionRate:
+      carts > 0 ? Math.round((paid / carts) * 10000) / 100 : 0,
+    abandonmentRate:
+      carts > 0 ? Math.round((abandoned / carts) * 10000) / 100 : 0,
+  };
+};
+
+const inventoryHealth = async () => {
+  const [active, outOfStock, lowStockRows, archived, drafts] = await Promise.all([
+    prisma.product.count({
+      where: { isDeleted: false, status: ProductStatus.ACTIVE },
+    }),
+    prisma.product.count({
+      where: { isDeleted: false, status: ProductStatus.OUT_OF_STOCK },
+    }),
+    prisma.$queryRawUnsafe<{ count: bigint }[]>(
+      `SELECT COUNT(*)::bigint AS count FROM products WHERE "isDeleted" = false AND "trackInventory" = true AND stock <= "lowStockAlert" AND stock > 0`
+    ),
+    prisma.product.count({
+      where: { isDeleted: false, status: ProductStatus.ARCHIVED },
+    }),
+    prisma.product.count({
+      where: { isDeleted: false, status: ProductStatus.DRAFT },
+    }),
+  ]);
+  const lowStock = Number(lowStockRows[0]?.count ?? 0);
+  return { active, lowStock, outOfStock, archived, drafts };
+};
+
+export const statsService = {
+  overview,
+  recentOrders,
+  topProducts,
+  revenueByDay,
+  marketplace,
+  topSellers,
+  payoutPipeline,
+  // analytics
+  ordersTimeseries,
+  salesByCategory,
+  customerAcquisition,
+  refundMetrics,
+  topCustomers,
+  conversionFunnel,
+  inventoryHealth,
+};

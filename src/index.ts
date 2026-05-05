@@ -30,12 +30,16 @@ import { shippingRouter } from "./modules/shipping/shipping.router";
 import { searchRouter } from "./modules/search/search.router";
 import { productQaRouter } from "./modules/productQa/productQa.router";
 import { recommendationRouter } from "./modules/recommendation/recommendation.router";
+import { adminProductRouter } from "./modules/adminProduct/adminProduct.router";
+import { adminUserRouter } from "./modules/adminUser/adminUser.router";
 
 const router = Router();
 
 // Auth + Users
 router.use("/auth", authRoutes);
 router.use("/users", userRouter);
+router.use("/admin/products", adminProductRouter);
+router.use("/admin/users", adminUserRouter);
 router.use("/admin", adminRouter);
 
 // Catalog

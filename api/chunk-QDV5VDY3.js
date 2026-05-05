@@ -30,7 +30,7 @@ import {
 } from "./chunk-EM24WAHR.js";
 
 // src/index.ts
-import { Router as Router28 } from "express";
+import { Router as Router31 } from "express";
 
 // src/modules/auth/auth.router.ts
 import { Router } from "express";
@@ -998,6 +998,15 @@ var loginUser2 = catchAsync(async (req, res) => {
   });
 });
 var getMe2 = catchAsync(async (req, res) => {
+  if (!req.user?.userId) {
+    sendResponse(res, {
+      httpStatusCode: status3.OK,
+      success: true,
+      message: "Not authenticated",
+      data: { user: null }
+    });
+    return;
+  }
   const result = await authService.getMe(req.user);
   sendResponse(res, {
     httpStatusCode: status3.OK,
@@ -1090,7 +1099,7 @@ var resetPassword2 = catchAsync(async (req, res) => {
   });
 });
 var googleLogin = catchAsync(async (_req, res) => {
-  res.redirect(`${envVars.BETTER_AUTH_URL}/api/auth/sign-in/social?provider=google`);
+  res.redirect(`${envVars.BETTER_AUTH_URL}/api/auth/sign-in/social/google`);
 });
 var googleLoginSuccess2 = catchAsync(async (req, res) => {
   const session = req.session;
@@ -1248,6 +1257,49 @@ var checkAuth = (...authRoles) => async (req, res, next) => {
     next(error);
   }
 };
+var optionalAuth = async (req, _res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : void 0;
+    const cookieToken = CookieUtils.getCookie(req, "accessToken");
+    const accessToken = bearerToken || cookieToken;
+    const betterAuthSessionToken = CookieUtils.getCookie(req, "better-auth.session_token") || CookieUtils.getCookie(req, "__Secure-better-auth.session_token");
+    let userId = null;
+    if (accessToken) {
+      const verified = jwtUtils.verifyToken(accessToken, envVars.ACCESS_TOKEN_SECRET);
+      if (verified.success && verified.data?.userId) {
+        userId = String(verified.data.userId);
+      }
+    }
+    if (!userId && (betterAuthSessionToken || authHeader)) {
+      const fallbackCookieHeader = req.headers.cookie || [
+        betterAuthSessionToken ? `better-auth.session_token=${betterAuthSessionToken}` : "",
+        betterAuthSessionToken ? `__Secure-better-auth.session_token=${betterAuthSessionToken}` : ""
+      ].filter(Boolean).join("; ");
+      const session = await auth.api.getSession({
+        headers: {
+          ...fallbackCookieHeader ? { cookie: fallbackCookieHeader } : {},
+          ...authHeader ? { authorization: authHeader } : {}
+        }
+      }).catch(() => null);
+      if (session?.user?.id) userId = session.user.id;
+    }
+    if (!userId) return next();
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.isDeleted) return next();
+    if (user.status === UserStatus.BLOCKED || user.status === UserStatus.DELETED) {
+      return next();
+    }
+    req.user = {
+      userId: user.id,
+      role: user.role,
+      email: user.email
+    };
+    next();
+  } catch {
+    next();
+  }
+};
 
 // src/middleware/validateRequest.ts
 var replaceObjectContents = (target, source) => {
@@ -1378,7 +1430,7 @@ router.post(
 router.post("/login", authLimiter, validateRequest(loginZodSchema), authControler.loginUser);
 router.post("/demo-login", authLimiter, authControler.demoLogin);
 router.post("/demo-login/:role", authLimiter, authControler.demoLogin);
-router.get("/me", checkAuth(), authControler.getMe);
+router.get("/me", optionalAuth, authControler.getMe);
 router.post("/refresh-token", authControler.getNewToken);
 router.post(
   "/change-password",
@@ -3337,6 +3389,153 @@ var adminReinstateSeller = async (id, _adminUserId) => {
     }
   });
 };
+var adminMessageSeller = async (id, payload) => {
+  const seller = await prisma.seller.findUnique({ where: { id } });
+  if (!seller) throw new AppError_default(status17.NOT_FOUND, "Seller not found");
+  await notificationService.createNotification({
+    userId: seller.userId,
+    type: NotificationType.SYSTEM,
+    title: payload.title,
+    message: payload.message,
+    actionUrl: payload.actionUrl ?? "/seller/dashboard",
+    metadata: { sellerId: id, fromAdmin: true }
+  });
+  return { id, sent: true };
+};
+var adminGetSellerDetail = async (id) => {
+  const seller = await prisma.seller.findUnique({
+    where: { id },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          status: true,
+          createdAt: true
+        }
+      },
+      _count: {
+        select: { products: true, sellerOrders: true, payouts: true }
+      }
+    }
+  });
+  if (!seller) throw new AppError_default(status17.NOT_FOUND, "Seller not found");
+  const today = /* @__PURE__ */ new Date();
+  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const last30 = new Date(Date.now() - 30 * 864e5);
+  const [paidAgg, monthAgg, last30Agg, pendingPayouts, paidPayouts, lowStockCount, refundCount] = await Promise.all([
+    prisma.sellerOrder.aggregate({
+      where: { sellerId: id, order: { paymentStatus: "PAID" } },
+      _sum: { grandTotal: true, commissionAmount: true, payoutAmount: true },
+      _count: true
+    }),
+    prisma.sellerOrder.aggregate({
+      where: {
+        sellerId: id,
+        order: { paymentStatus: "PAID" },
+        createdAt: { gte: startOfMonth }
+      },
+      _sum: { grandTotal: true, payoutAmount: true }
+    }),
+    prisma.sellerOrder.aggregate({
+      where: {
+        sellerId: id,
+        createdAt: { gte: last30 }
+      },
+      _count: true
+    }),
+    prisma.sellerPayout.aggregate({
+      where: { sellerId: id, status: { in: ["PENDING", "PROCESSING"] } },
+      _sum: { netAmount: true },
+      _count: true
+    }),
+    prisma.sellerPayout.aggregate({
+      where: { sellerId: id, status: "PAID" },
+      _sum: { netAmount: true },
+      _count: true
+    }),
+    prisma.product.count({
+      where: {
+        sellerId: id,
+        isDeleted: false,
+        trackInventory: true,
+        stock: { lte: 5 }
+      }
+    }),
+    prisma.refund.count({ where: { sellerId: id } })
+  ]);
+  return {
+    seller,
+    kpis: {
+      paidOrders: paidAgg._count,
+      gmv: Number(paidAgg._sum.grandTotal ?? 0),
+      commission: Number(paidAgg._sum.commissionAmount ?? 0),
+      sellerEarnings: Number(paidAgg._sum.payoutAmount ?? 0),
+      monthGmv: Number(monthAgg._sum.grandTotal ?? 0),
+      monthEarnings: Number(monthAgg._sum.payoutAmount ?? 0),
+      ordersLast30Days: last30Agg._count,
+      pendingPayouts: {
+        count: pendingPayouts._count,
+        amount: Number(pendingPayouts._sum.netAmount ?? 0)
+      },
+      paidPayouts: {
+        count: paidPayouts._count,
+        amount: Number(paidPayouts._sum.netAmount ?? 0)
+      },
+      lowStockCount,
+      refundCount
+    }
+  };
+};
+var adminUpdateSeller = async (id, payload) => {
+  const seller = await prisma.seller.findUnique({ where: { id } });
+  if (!seller) throw new AppError_default(status17.NOT_FOUND, "Seller not found");
+  const data = {};
+  if (payload.shopName && payload.shopName !== seller.shopName) {
+    data.shopName = payload.shopName;
+    data.shopSlug = await ensureUniqueShopSlug(slugify(payload.shopName), seller.id);
+  }
+  for (const k of [
+    "tagline",
+    "description",
+    "commissionRate",
+    "kycStatus",
+    "contactEmail",
+    "contactPhone"
+  ]) {
+    if (payload[k] !== void 0) data[k] = payload[k];
+  }
+  return prisma.seller.update({ where: { id }, data });
+};
+var adminSoftDeleteSeller = async (id) => {
+  const seller = await prisma.seller.findUnique({ where: { id } });
+  if (!seller) throw new AppError_default(status17.NOT_FOUND, "Seller not found");
+  if (seller.isDeleted) {
+    throw new AppError_default(status17.CONFLICT, "Seller is already deleted");
+  }
+  await prisma.$transaction(async (tx) => {
+    await tx.seller.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: /* @__PURE__ */ new Date(),
+        status: SellerStatus.SUSPENDED
+      }
+    });
+    await tx.product.updateMany({
+      where: { sellerId: id, isDeleted: false },
+      data: { status: "ARCHIVED" }
+    });
+  });
+  await notificationService.createNotification({
+    userId: seller.userId,
+    type: NotificationType.SELLER_SUSPENDED,
+    title: "Your shop has been closed",
+    message: "Your seller account was closed by the platform. Contact support if you believe this was a mistake."
+  }).catch(() => null);
+  return { id, deleted: true };
+};
 var getMyDashboard = async (userId) => {
   const seller = await prisma.seller.findUnique({ where: { userId } });
   if (!seller) throw new AppError_default(status17.NOT_FOUND, "Seller profile not found");
@@ -3426,10 +3625,14 @@ var sellerService = {
   // Admin
   adminListSellers,
   adminGetSeller,
+  adminGetSellerDetail,
+  adminUpdateSeller,
+  adminSoftDeleteSeller,
   adminApproveSeller,
   adminRejectSeller,
   adminSuspendSeller,
-  adminReinstateSeller
+  adminReinstateSeller,
+  adminMessageSeller
 };
 
 // src/modules/seller/seller.controler.ts
@@ -3558,6 +3761,48 @@ var adminReinstateSeller2 = catchAsync(async (req, res) => {
     data: result
   });
 });
+var adminMessageSeller2 = catchAsync(async (req, res) => {
+  const result = await sellerService.adminMessageSeller(
+    req.params.id,
+    req.body
+  );
+  sendResponse(res, {
+    httpStatusCode: status18.OK,
+    success: true,
+    message: "Message sent to seller",
+    data: result
+  });
+});
+var adminGetSellerDetail2 = catchAsync(async (req, res) => {
+  const result = await sellerService.adminGetSellerDetail(req.params.id);
+  sendResponse(res, {
+    httpStatusCode: status18.OK,
+    success: true,
+    message: "Seller detail",
+    data: result
+  });
+});
+var adminUpdateSeller2 = catchAsync(async (req, res) => {
+  const result = await sellerService.adminUpdateSeller(
+    req.params.id,
+    req.body
+  );
+  sendResponse(res, {
+    httpStatusCode: status18.OK,
+    success: true,
+    message: "Seller updated",
+    data: result
+  });
+});
+var adminSoftDeleteSeller2 = catchAsync(async (req, res) => {
+  const result = await sellerService.adminSoftDeleteSeller(req.params.id);
+  sendResponse(res, {
+    httpStatusCode: status18.OK,
+    success: true,
+    message: "Seller deleted",
+    data: result
+  });
+});
 var sellerController = {
   listPublicShops: listPublicShops2,
   getPublicShopBySlug: getPublicShopBySlug2,
@@ -3567,10 +3812,14 @@ var sellerController = {
   getMyDashboard: getMyDashboard2,
   adminListSellers: adminListSellers2,
   adminGetSeller: adminGetSeller2,
+  adminGetSellerDetail: adminGetSellerDetail2,
+  adminUpdateSeller: adminUpdateSeller2,
+  adminSoftDeleteSeller: adminSoftDeleteSeller2,
   adminApproveSeller: adminApproveSeller2,
   adminRejectSeller: adminRejectSeller2,
   adminSuspendSeller: adminSuspendSeller2,
-  adminReinstateSeller: adminReinstateSeller2
+  adminReinstateSeller: adminReinstateSeller2,
+  adminMessageSeller: adminMessageSeller2
 };
 
 // src/modules/seller/seller.validation.ts
@@ -3620,6 +3869,24 @@ var adminRejectSellerSchema = z7.object({
 var adminSuspendSellerSchema = z7.object({
   reason: z7.string().min(3).max(2e3)
 });
+var adminMessageSellerSchema = z7.object({
+  title: z7.string().min(2).max(200),
+  message: z7.string().min(2).max(2e3),
+  actionUrl: z7.string().max(500).optional()
+});
+var adminUpdateSellerSchema = z7.object({
+  body: z7.object({
+    shopName: z7.string().min(2).max(120).optional(),
+    tagline: z7.string().max(200).optional(),
+    description: z7.string().max(5e3).optional(),
+    commissionRate: z7.number().min(0).max(100).optional(),
+    kycStatus: z7.enum(["NOT_SUBMITTED", "PENDING", "APPROVED", "REJECTED"]).optional(),
+    contactEmail: z7.string().email().max(160).optional(),
+    contactPhone: z7.string().max(40).optional()
+  }).strict().refine((v) => Object.keys(v).length > 0, {
+    message: "At least one field is required"
+  })
+});
 var sellerIdParamSchema = z7.object({
   params: z7.object({
     id: z7.string().uuid("seller id must be a UUID")
@@ -3663,6 +3930,22 @@ router8.get(
   checkAuth(Role.ADMIN, Role.STAFF),
   sellerController.adminGetSeller
 );
+router8.get(
+  "/admin/:id/detail",
+  checkAuth(Role.ADMIN, Role.STAFF),
+  sellerController.adminGetSellerDetail
+);
+router8.patch(
+  "/admin/:id",
+  checkAuth(Role.ADMIN),
+  validateRequest(adminUpdateSellerSchema),
+  sellerController.adminUpdateSeller
+);
+router8.delete(
+  "/admin/:id",
+  checkAuth(Role.ADMIN),
+  sellerController.adminSoftDeleteSeller
+);
 router8.patch(
   "/admin/:id/approve",
   checkAuth(Role.ADMIN),
@@ -3686,13 +3969,19 @@ router8.patch(
   checkAuth(Role.ADMIN),
   sellerController.adminReinstateSeller
 );
+router8.post(
+  "/admin/:id/message",
+  checkAuth(Role.ADMIN, Role.STAFF),
+  validateRequest(adminMessageSellerSchema),
+  sellerController.adminMessageSeller
+);
 var sellerRouter = router8;
 
 // src/modules/cart/cart.router.ts
 import { Router as Router9 } from "express";
 
 // src/middleware/optionalAuth.ts
-var optionalAuth = async (req, _res, next) => {
+var optionalAuth2 = async (req, _res, next) => {
   try {
     const authHeader = req.headers.authorization;
     const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : void 0;
@@ -4106,11 +4395,11 @@ var clearCart = async (args) => {
 };
 var applyCoupon = async (args, code) => {
   const cart = await findOrCreateCart(args);
-  const summary6 = await summarize(cart.id);
-  if (summary6.summary.subtotal <= 0) {
+  const summary8 = await summarize(cart.id);
+  if (summary8.summary.subtotal <= 0) {
     throw new AppError_default(status20.BAD_REQUEST, "Cart is empty");
   }
-  await couponService.validateCoupon(code, summary6.summary.subtotal);
+  await couponService.validateCoupon(code, summary8.summary.subtotal);
   await prisma.cart.update({
     where: { id: cart.id },
     data: { couponCode: code.toUpperCase() }
@@ -4261,7 +4550,7 @@ var applyCouponSchema = z8.object({
 
 // src/modules/cart/cart.router.ts
 var router9 = Router9();
-router9.use(optionalAuth);
+router9.use(optionalAuth2);
 router9.get("/", cartController.get);
 router9.post("/items", validateRequest(addCartItemSchema), cartController.addItem);
 router9.patch(
@@ -6408,7 +6697,173 @@ var payoutPipeline = async () => {
     failed: fmt(failed)
   };
 };
-var statsService = { overview, recentOrders, topProducts, revenueByDay, marketplace, topSellers, payoutPipeline };
+var ordersTimeseries = async (days = 30) => {
+  const since = /* @__PURE__ */ new Date();
+  since.setDate(since.getDate() - days);
+  const orders = await prisma.order.findMany({
+    where: { placedAt: { gte: since } },
+    select: { placedAt: true, status: true, paymentStatus: true, grandTotal: true }
+  });
+  const buckets2 = {};
+  for (const o of orders) {
+    const day = o.placedAt.toISOString().slice(0, 10);
+    if (!buckets2[day]) buckets2[day] = { date: day, orders: 0, paidOrders: 0, revenue: 0 };
+    buckets2[day].orders += 1;
+    if (o.paymentStatus === PaymentStatus.PAID) {
+      buckets2[day].paidOrders += 1;
+      buckets2[day].revenue += toNumber(o.grandTotal);
+    }
+  }
+  return Object.values(buckets2).sort((a, b) => a.date.localeCompare(b.date)).map((b) => ({ ...b, revenue: Math.round(b.revenue * 100) / 100 }));
+};
+var salesByCategory = async (limit = 10) => {
+  const rows = await prisma.$queryRawUnsafe(`
+    SELECT c.id AS category_id, c.name AS category_name,
+           SUM(oi.quantity)::bigint AS units,
+           SUM(oi."lineTotal")::numeric AS revenue
+    FROM order_items oi
+    JOIN orders o ON o.id = oi."orderId"
+    JOIN products p ON p.id = oi."productId"
+    JOIN categories c ON c.id = p."categoryId"
+    WHERE o."paymentStatus" = 'PAID'
+    GROUP BY c.id, c.name
+    ORDER BY revenue DESC
+    LIMIT ${Math.min(50, Math.max(1, limit))}
+  `);
+  return rows.map((r) => ({
+    categoryId: r.category_id,
+    categoryName: r.category_name,
+    units: Number(r.units),
+    revenue: Math.round(Number(r.revenue) * 100) / 100
+  }));
+};
+var customerAcquisition = async (days = 30) => {
+  const since = /* @__PURE__ */ new Date();
+  since.setDate(since.getDate() - days);
+  const users = await prisma.user.findMany({
+    where: { role: Role.CUSTOMER, createdAt: { gte: since } },
+    select: { createdAt: true }
+  });
+  const buckets2 = {};
+  for (const u of users) {
+    const day = u.createdAt.toISOString().slice(0, 10);
+    buckets2[day] = (buckets2[day] ?? 0) + 1;
+  }
+  return Object.entries(buckets2).sort(([a], [b]) => a.localeCompare(b)).map(([date, count]) => ({ date, newCustomers: count }));
+};
+var refundMetrics = async () => {
+  const [byStatus, totalRefunded] = await Promise.all([
+    prisma.refund.groupBy({
+      by: ["status"],
+      _count: true,
+      _sum: { refundedAmount: true }
+    }),
+    prisma.refund.aggregate({
+      where: { status: "COMPLETED" },
+      _sum: { refundedAmount: true }
+    })
+  ]);
+  const paidRevenue = await prisma.order.aggregate({
+    where: { paymentStatus: PaymentStatus.PAID },
+    _sum: { grandTotal: true }
+  });
+  const gmv = toNumber(paidRevenue._sum.grandTotal);
+  const refunded = toNumber(totalRefunded._sum.refundedAmount);
+  return {
+    byStatus: byStatus.map((r) => ({
+      status: r.status,
+      count: r._count,
+      amount: Math.round(toNumber(r._sum.refundedAmount) * 100) / 100
+    })),
+    totalRefunded: Math.round(refunded * 100) / 100,
+    refundRate: gmv > 0 ? Math.round(refunded / gmv * 1e4) / 100 : 0
+  };
+};
+var topCustomers = async (limit = 10) => {
+  const rows = await prisma.$queryRawUnsafe(`
+    SELECT u.id AS user_id, u.name, u.email,
+           COUNT(o.id)::bigint AS orders,
+           SUM(o."grandTotal")::numeric AS spend
+    FROM "user" u
+    JOIN orders o ON o."userId" = u.id
+    WHERE o."paymentStatus" = 'PAID' AND u."isDeleted" = false
+    GROUP BY u.id, u.name, u.email
+    ORDER BY spend DESC
+    LIMIT ${Math.min(50, Math.max(1, limit))}
+  `);
+  return rows.map((r) => ({
+    userId: r.user_id,
+    name: r.name,
+    email: r.email,
+    orderCount: Number(r.orders),
+    lifetimeSpend: Math.round(Number(r.spend) * 100) / 100
+  }));
+};
+var conversionFunnel = async (days = 30) => {
+  const since = /* @__PURE__ */ new Date();
+  since.setDate(since.getDate() - days);
+  const [carts, abandoned, converted, paid] = await Promise.all([
+    prisma.cart.count({ where: { createdAt: { gte: since } } }),
+    prisma.cart.count({
+      where: { createdAt: { gte: since }, status: "ABANDONED" }
+    }),
+    prisma.cart.count({
+      where: { createdAt: { gte: since }, status: "CONVERTED" }
+    }),
+    prisma.order.count({
+      where: {
+        placedAt: { gte: since },
+        paymentStatus: PaymentStatus.PAID
+      }
+    })
+  ]);
+  return {
+    carts,
+    abandoned,
+    converted,
+    paidOrders: paid,
+    conversionRate: carts > 0 ? Math.round(paid / carts * 1e4) / 100 : 0,
+    abandonmentRate: carts > 0 ? Math.round(abandoned / carts * 1e4) / 100 : 0
+  };
+};
+var inventoryHealth = async () => {
+  const [active, outOfStock, lowStockRows, archived, drafts] = await Promise.all([
+    prisma.product.count({
+      where: { isDeleted: false, status: ProductStatus.ACTIVE }
+    }),
+    prisma.product.count({
+      where: { isDeleted: false, status: ProductStatus.OUT_OF_STOCK }
+    }),
+    prisma.$queryRawUnsafe(
+      `SELECT COUNT(*)::bigint AS count FROM products WHERE "isDeleted" = false AND "trackInventory" = true AND stock <= "lowStockAlert" AND stock > 0`
+    ),
+    prisma.product.count({
+      where: { isDeleted: false, status: ProductStatus.ARCHIVED }
+    }),
+    prisma.product.count({
+      where: { isDeleted: false, status: ProductStatus.DRAFT }
+    })
+  ]);
+  const lowStock2 = Number(lowStockRows[0]?.count ?? 0);
+  return { active, lowStock: lowStock2, outOfStock, archived, drafts };
+};
+var statsService = {
+  overview,
+  recentOrders,
+  topProducts,
+  revenueByDay,
+  marketplace,
+  topSellers,
+  payoutPipeline,
+  // analytics
+  ordersTimeseries,
+  salesByCategory,
+  customerAcquisition,
+  refundMetrics,
+  topCustomers,
+  conversionFunnel,
+  inventoryHealth
+};
 
 // src/modules/stats/stats.controler.ts
 var overview2 = catchAsync(async (_req, res) => {
@@ -6478,7 +6933,90 @@ var payoutPipeline2 = catchAsync(async (_req, res) => {
     data: result
   });
 });
-var statsController = { overview: overview2, recentOrders: recentOrders2, topProducts: topProducts2, revenueByDay: revenueByDay2, marketplace: marketplace2, topSellers: topSellers2, payoutPipeline: payoutPipeline2 };
+var ordersTimeseries2 = catchAsync(async (req, res) => {
+  const days = Number(req.query.days) || 30;
+  const result = await statsService.ordersTimeseries(days);
+  sendResponse(res, {
+    httpStatusCode: status34.OK,
+    success: true,
+    message: "Orders timeseries",
+    data: result
+  });
+});
+var salesByCategory2 = catchAsync(async (req, res) => {
+  const limit = Number(req.query.limit) || 10;
+  const result = await statsService.salesByCategory(limit);
+  sendResponse(res, {
+    httpStatusCode: status34.OK,
+    success: true,
+    message: "Sales by category",
+    data: result
+  });
+});
+var customerAcquisition2 = catchAsync(async (req, res) => {
+  const days = Number(req.query.days) || 30;
+  const result = await statsService.customerAcquisition(days);
+  sendResponse(res, {
+    httpStatusCode: status34.OK,
+    success: true,
+    message: "Customer acquisition",
+    data: result
+  });
+});
+var refundMetrics2 = catchAsync(async (_req, res) => {
+  const result = await statsService.refundMetrics();
+  sendResponse(res, {
+    httpStatusCode: status34.OK,
+    success: true,
+    message: "Refund metrics",
+    data: result
+  });
+});
+var topCustomers2 = catchAsync(async (req, res) => {
+  const limit = Number(req.query.limit) || 10;
+  const result = await statsService.topCustomers(limit);
+  sendResponse(res, {
+    httpStatusCode: status34.OK,
+    success: true,
+    message: "Top customers",
+    data: result
+  });
+});
+var conversionFunnel2 = catchAsync(async (req, res) => {
+  const days = Number(req.query.days) || 30;
+  const result = await statsService.conversionFunnel(days);
+  sendResponse(res, {
+    httpStatusCode: status34.OK,
+    success: true,
+    message: "Conversion funnel",
+    data: result
+  });
+});
+var inventoryHealth2 = catchAsync(async (_req, res) => {
+  const result = await statsService.inventoryHealth();
+  sendResponse(res, {
+    httpStatusCode: status34.OK,
+    success: true,
+    message: "Inventory health",
+    data: result
+  });
+});
+var statsController = {
+  overview: overview2,
+  recentOrders: recentOrders2,
+  topProducts: topProducts2,
+  revenueByDay: revenueByDay2,
+  marketplace: marketplace2,
+  topSellers: topSellers2,
+  payoutPipeline: payoutPipeline2,
+  ordersTimeseries: ordersTimeseries2,
+  salesByCategory: salesByCategory2,
+  customerAcquisition: customerAcquisition2,
+  refundMetrics: refundMetrics2,
+  topCustomers: topCustomers2,
+  conversionFunnel: conversionFunnel2,
+  inventoryHealth: inventoryHealth2
+};
 
 // src/modules/stats/stats.router.ts
 var router16 = Router16();
@@ -6490,6 +7028,13 @@ router16.get("/revenue", statsController.revenueByDay);
 router16.get("/marketplace", statsController.marketplace);
 router16.get("/top-sellers", statsController.topSellers);
 router16.get("/payout-pipeline", statsController.payoutPipeline);
+router16.get("/orders-timeseries", statsController.ordersTimeseries);
+router16.get("/sales-by-category", statsController.salesByCategory);
+router16.get("/customer-acquisition", statsController.customerAcquisition);
+router16.get("/refund-metrics", statsController.refundMetrics);
+router16.get("/top-customers", statsController.topCustomers);
+router16.get("/conversion-funnel", statsController.conversionFunnel);
+router16.get("/inventory-health", statsController.inventoryHealth);
 var StatsRoutes = router16;
 
 // src/modules/payment/payment.router.ts
@@ -6733,8 +7278,12 @@ var notificationController = { list: list7, markAsRead, markAllAsRead, remove: r
 
 // src/modules/notification/notification.route.ts
 var router18 = Router18();
-router18.use(checkAuth(Role.CUSTOMER, Role.ADMIN, Role.STAFF));
+router18.use(
+  checkAuth(Role.CUSTOMER, Role.SELLER, Role.ADMIN, Role.STAFF)
+);
 router18.get("/", notificationController.list);
+router18.get("/my", notificationController.list);
+router18.get("/me", notificationController.list);
 router18.patch("/read-all", notificationController.markAllAsRead);
 router18.patch("/:id/read", notificationController.markAsRead);
 router18.delete("/:id", notificationController.remove);
@@ -7215,10 +7764,10 @@ var aiProvider = {
   getActiveProvider: resolveProvider,
   /** Non-throwing introspection of which providers have keys configured. */
   getConfiguredProviders() {
-    const list9 = [];
-    if (envVars.OPENAI_API_KEY) list9.push("openai");
-    if (envVars.GEMINI_API_KEY) list9.push("gemini");
-    return list9;
+    const list15 = [];
+    if (envVars.OPENAI_API_KEY) list15.push("openai");
+    if (envVars.GEMINI_API_KEY) list15.push("gemini");
+    return list15;
   },
   /** Lightweight reachability probe used by GET /ai/health. */
   async ping() {
@@ -9798,38 +10347,1470 @@ router27.get(
   recommendationController.fbt
 );
 router27.get("/products/:productId/also-viewed", recommendationController.alsoViewed);
-router27.get("/for-you", optionalAuth, recommendationController.forYou);
+router27.get("/for-you", optionalAuth2, recommendationController.forYou);
 var recommendationRouter = router27;
 
-// src/index.ts
+// src/modules/adminProduct/adminProduct.router.ts
+import { Router as Router28 } from "express";
+
+// src/modules/adminProduct/adminProduct.controler.ts
+import status53 from "http-status";
+
+// src/modules/adminProduct/adminProduct.service.ts
+import status52 from "http-status";
+var list9 = async (q) => {
+  const page = Math.max(1, Number(q.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(q.limit) || 20));
+  const skip = (page - 1) * limit;
+  const where = {};
+  if (q.isDeleted === "true") where.isDeleted = true;
+  else if (q.isDeleted === "false") where.isDeleted = false;
+  if (q.status && q.status !== "ALL") where.status = q.status;
+  if (q.sellerId) where.sellerId = q.sellerId;
+  if (q.categoryId) where.categoryId = q.categoryId;
+  if (q.brandId) where.brandId = q.brandId;
+  if (q.isFeatured === "true") where.isFeatured = true;
+  if (q.isBestseller === "true") where.isBestseller = true;
+  if (q.outOfStock === "true") where.stock = { lte: 0 };
+  if (q.minPrice || q.maxPrice) {
+    where.price = {};
+    if (q.minPrice) where.price.gte = Number(q.minPrice);
+    if (q.maxPrice) where.price.lte = Number(q.maxPrice);
+  }
+  if (q.search) {
+    where.OR = [
+      { name: { contains: q.search, mode: "insensitive" } },
+      { sku: { contains: q.search, mode: "insensitive" } },
+      { slug: { contains: q.search, mode: "insensitive" } }
+    ];
+  }
+  let lowStockIds = null;
+  if (q.lowStock === "true") {
+    const rows = await prisma.$queryRawUnsafe(
+      `SELECT id FROM products WHERE "trackInventory" = true AND stock <= "lowStockAlert" AND "isDeleted" = false`
+    );
+    lowStockIds = rows.map((r) => r.id);
+    if (lowStockIds.length === 0) {
+      return {
+        data: [],
+        meta: { page, limit, total: 0, totalPages: 0 }
+      };
+    }
+    where.id = { in: lowStockIds };
+  }
+  const sortBy = q.sortBy ?? "createdAt";
+  const sortOrder = q.sortOrder ?? "desc";
+  const [data, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      orderBy: { [sortBy]: sortOrder },
+      skip,
+      take: limit,
+      include: {
+        images: { orderBy: { sortOrder: "asc" }, take: 1 },
+        brand: { select: { id: true, name: true, slug: true } },
+        category: { select: { id: true, name: true, slug: true } },
+        seller: {
+          select: {
+            id: true,
+            shopName: true,
+            shopSlug: true,
+            status: true
+          }
+        }
+      }
+    }),
+    prisma.product.count({ where })
+  ]);
+  return {
+    data,
+    meta: { page, limit, total, totalPages: Math.ceil(total / limit) }
+  };
+};
+var getDetail = async (id) => {
+  const product = await prisma.product.findUnique({
+    where: { id },
+    include: {
+      images: { orderBy: { sortOrder: "asc" } },
+      variants: true,
+      specifications: { orderBy: { sortOrder: "asc" } },
+      tags: true,
+      brand: true,
+      category: true,
+      seller: {
+        select: {
+          id: true,
+          shopName: true,
+          shopSlug: true,
+          status: true,
+          user: { select: { id: true, email: true, name: true } }
+        }
+      },
+      _count: {
+        select: {
+          orderItems: true,
+          reviews: true,
+          questions: true
+        }
+      }
+    }
+  });
+  if (!product) throw new AppError_default(status52.NOT_FOUND, "Product not found");
+  const items = await prisma.orderItem.findMany({
+    where: {
+      productId: id,
+      order: { paymentStatus: PaymentStatus.PAID }
+    },
+    select: { quantity: true, lineTotal: true }
+  });
+  const unitsSold = items.reduce((s, i) => s + i.quantity, 0);
+  const revenue = items.reduce((s, i) => s + toNumber(i.lineTotal), 0);
+  const refundCount = await prisma.refundItem.count({
+    where: { orderItem: { productId: id } }
+  });
+  return {
+    ...product,
+    stats: {
+      unitsSold,
+      revenue: Math.round(revenue * 100) / 100,
+      refundCount,
+      refundRate: unitsSold > 0 ? Math.round(refundCount / unitsSold * 1e4) / 100 : 0
+    }
+  };
+};
+var update8 = async (id, payload) => {
+  const existing = await prisma.product.findUnique({ where: { id } });
+  if (!existing) throw new AppError_default(status52.NOT_FOUND, "Product not found");
+  const allowed = [
+    "name",
+    "shortDesc",
+    "description",
+    "price",
+    "compareAtPrice",
+    "costPerItem",
+    "currency",
+    "stock",
+    "lowStockAlert",
+    "trackInventory",
+    "allowBackorder",
+    "weightGrams",
+    "status",
+    "condition",
+    "isFeatured",
+    "isBestseller",
+    "isNewArrival",
+    "isOnSale",
+    "metaTitle",
+    "metaDescription",
+    "brandId",
+    "categoryId"
+  ];
+  const data = {};
+  for (const k of allowed) {
+    if (payload[k] !== void 0) data[k] = payload[k];
+  }
+  if (payload.status === ProductStatus.ACTIVE && !existing.publishedAt) {
+    data.publishedAt = /* @__PURE__ */ new Date();
+  }
+  return prisma.product.update({ where: { id }, data });
+};
+var softDelete = async (id) => {
+  const existing = await prisma.product.findUnique({
+    where: { id },
+    select: { id: true, sellerId: true, isDeleted: true }
+  });
+  if (!existing) throw new AppError_default(status52.NOT_FOUND, "Product not found");
+  if (existing.isDeleted) {
+    throw new AppError_default(status52.CONFLICT, "Product is already deleted");
+  }
+  await prisma.$transaction(async (tx) => {
+    await tx.product.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: /* @__PURE__ */ new Date(),
+        status: ProductStatus.ARCHIVED
+      }
+    });
+    await tx.seller.update({
+      where: { id: existing.sellerId },
+      data: { productCount: { decrement: 1 } }
+    }).catch(() => null);
+  });
+  return { id, deleted: true };
+};
+var restore = async (id) => {
+  const existing = await prisma.product.findUnique({
+    where: { id },
+    select: { id: true, sellerId: true, isDeleted: true }
+  });
+  if (!existing) throw new AppError_default(status52.NOT_FOUND, "Product not found");
+  if (!existing.isDeleted) {
+    throw new AppError_default(status52.CONFLICT, "Product is not deleted");
+  }
+  await prisma.$transaction(async (tx) => {
+    await tx.product.update({
+      where: { id },
+      data: {
+        isDeleted: false,
+        deletedAt: null,
+        status: ProductStatus.DRAFT
+      }
+    });
+    await tx.seller.update({
+      where: { id: existing.sellerId },
+      data: { productCount: { increment: 1 } }
+    }).catch(() => null);
+  });
+  return { id, restored: true };
+};
+var hardDelete = async (id) => {
+  const existing = await prisma.product.findUnique({
+    where: { id },
+    select: { id: true, _count: { select: { orderItems: true } } }
+  });
+  if (!existing) throw new AppError_default(status52.NOT_FOUND, "Product not found");
+  if (existing._count.orderItems > 0) {
+    throw new AppError_default(
+      status52.CONFLICT,
+      "Cannot hard-delete a product with order history. Use soft-delete instead."
+    );
+  }
+  await prisma.product.delete({ where: { id } });
+  return { id, hardDeleted: true };
+};
+var bulk = async (payload) => {
+  if (!payload.ids?.length) {
+    throw new AppError_default(status52.BAD_REQUEST, "ids[] is required");
+  }
+  const where = { id: { in: payload.ids } };
+  switch (payload.action) {
+    case "archive":
+      return prisma.product.updateMany({
+        where,
+        data: { status: ProductStatus.ARCHIVED }
+      });
+    case "activate":
+      return prisma.product.updateMany({
+        where,
+        data: { status: ProductStatus.ACTIVE, publishedAt: /* @__PURE__ */ new Date() }
+      });
+    case "draft":
+      return prisma.product.updateMany({
+        where,
+        data: { status: ProductStatus.DRAFT }
+      });
+    case "feature":
+      return prisma.product.updateMany({ where, data: { isFeatured: true } });
+    case "unfeature":
+      return prisma.product.updateMany({ where, data: { isFeatured: false } });
+    case "bestseller":
+      return prisma.product.updateMany({ where, data: { isBestseller: true } });
+    case "unbestseller":
+      return prisma.product.updateMany({ where, data: { isBestseller: false } });
+    case "delete":
+      return prisma.product.updateMany({
+        where,
+        data: {
+          isDeleted: true,
+          deletedAt: /* @__PURE__ */ new Date(),
+          status: ProductStatus.ARCHIVED
+        }
+      });
+    case "restore":
+      return prisma.product.updateMany({
+        where,
+        data: { isDeleted: false, deletedAt: null, status: ProductStatus.DRAFT }
+      });
+    default:
+      throw new AppError_default(status52.BAD_REQUEST, "Unknown bulk action");
+  }
+};
+var adminProductService = {
+  list: list9,
+  getDetail,
+  update: update8,
+  softDelete,
+  restore,
+  hardDelete,
+  bulk
+};
+
+// src/modules/adminProduct/adminProduct.controler.ts
+var list10 = catchAsync(async (req, res) => {
+  const result = await adminProductService.list(req.query);
+  sendResponse(res, {
+    httpStatusCode: status53.OK,
+    success: true,
+    message: "Products retrieved",
+    data: result.data,
+    meta: result.meta
+  });
+});
+var getDetail2 = catchAsync(async (req, res) => {
+  const data = await adminProductService.getDetail(req.params.id);
+  sendResponse(res, {
+    httpStatusCode: status53.OK,
+    success: true,
+    message: "Product detail",
+    data
+  });
+});
+var update9 = catchAsync(async (req, res) => {
+  const data = await adminProductService.update(
+    req.params.id,
+    req.body
+  );
+  sendResponse(res, {
+    httpStatusCode: status53.OK,
+    success: true,
+    message: "Product updated",
+    data
+  });
+});
+var softDelete2 = catchAsync(async (req, res) => {
+  const data = await adminProductService.softDelete(req.params.id);
+  sendResponse(res, {
+    httpStatusCode: status53.OK,
+    success: true,
+    message: "Product moved to trash",
+    data
+  });
+});
+var restore2 = catchAsync(async (req, res) => {
+  const data = await adminProductService.restore(req.params.id);
+  sendResponse(res, {
+    httpStatusCode: status53.OK,
+    success: true,
+    message: "Product restored",
+    data
+  });
+});
+var hardDelete2 = catchAsync(async (req, res) => {
+  const data = await adminProductService.hardDelete(req.params.id);
+  sendResponse(res, {
+    httpStatusCode: status53.OK,
+    success: true,
+    message: "Product permanently deleted",
+    data
+  });
+});
+var bulk2 = catchAsync(async (req, res) => {
+  const data = await adminProductService.bulk(req.body);
+  sendResponse(res, {
+    httpStatusCode: status53.OK,
+    success: true,
+    message: "Bulk action complete",
+    data
+  });
+});
+var adminProductController = {
+  list: list10,
+  getDetail: getDetail2,
+  update: update9,
+  softDelete: softDelete2,
+  restore: restore2,
+  hardDelete: hardDelete2,
+  bulk: bulk2
+};
+
+// src/modules/adminProduct/adminProduct.validation.ts
+import { z as z22 } from "zod";
+var updateAdminProductSchema = z22.object({
+  body: z22.object({
+    name: z22.string().min(1).max(200).optional(),
+    shortDesc: z22.string().max(500).optional(),
+    description: z22.string().optional(),
+    price: z22.number().nonnegative().optional(),
+    compareAtPrice: z22.number().nonnegative().nullable().optional(),
+    costPerItem: z22.number().nonnegative().nullable().optional(),
+    currency: z22.string().length(3).optional(),
+    stock: z22.number().int().nonnegative().optional(),
+    lowStockAlert: z22.number().int().nonnegative().optional(),
+    trackInventory: z22.boolean().optional(),
+    allowBackorder: z22.boolean().optional(),
+    weightGrams: z22.number().nonnegative().optional(),
+    status: z22.nativeEnum(ProductStatus).optional(),
+    condition: z22.nativeEnum(ProductCondition).optional(),
+    isFeatured: z22.boolean().optional(),
+    isBestseller: z22.boolean().optional(),
+    isNewArrival: z22.boolean().optional(),
+    isOnSale: z22.boolean().optional(),
+    metaTitle: z22.string().optional(),
+    metaDescription: z22.string().optional(),
+    brandId: z22.string().uuid().nullable().optional(),
+    categoryId: z22.string().uuid().optional()
+  }).strict()
+});
+var bulkAdminProductSchema = z22.object({
+  body: z22.object({
+    ids: z22.array(z22.string().uuid()).min(1).max(500),
+    action: z22.enum([
+      "archive",
+      "activate",
+      "draft",
+      "feature",
+      "unfeature",
+      "bestseller",
+      "unbestseller",
+      "delete",
+      "restore"
+    ])
+  })
+});
+
+// src/modules/adminProduct/adminProduct.router.ts
 var router28 = Router28();
-router28.use("/auth", authRoutes);
-router28.use("/users", userRouter);
-router28.use("/admin", adminRouter);
-router28.use("/categories", categoryRouter);
-router28.use("/brands", brandRouter);
-router28.use("/products", productRouter);
-router28.use("/search", searchRouter);
-router28.use("/sellers", sellerRouter);
-router28.use("/cart", cartRouter);
-router28.use("/orders", orderRouter);
-router28.use("/seller-orders", sellerOrderRouter);
-router28.use("/payouts", payoutRouter);
-router28.use("/addresses", addressRouter);
-router28.use("/reviews", reviewRouter);
-router28.use("/wishlist", wishlistRouter);
-router28.use("/coupons", couponRouter);
-router28.use("/refunds", refundRouter);
-router28.use("/inventory", inventoryRouter);
-router28.use("/shipping", shippingRouter);
-router28.use("/", productQaRouter);
-router28.use("/recommendations", recommendationRouter);
-router28.use("/", stripeConnectRouter);
-router28.use("/payments", PaymentRoutes);
-router28.use("/notifications", notificationRouter);
-router28.use("/ai", aiRoutes);
-router28.use("/stats", StatsRoutes);
-var indexRoutes = router28;
+router28.use(checkAuth(Role.ADMIN, Role.STAFF));
+router28.get("/", adminProductController.list);
+router28.post(
+  "/bulk",
+  validateRequest(bulkAdminProductSchema),
+  adminProductController.bulk
+);
+router28.get("/:id", adminProductController.getDetail);
+router28.patch(
+  "/:id",
+  validateRequest(updateAdminProductSchema),
+  adminProductController.update
+);
+router28.delete("/:id", adminProductController.softDelete);
+router28.post("/:id/restore", adminProductController.restore);
+router28.delete("/:id/hard", adminProductController.hardDelete);
+var adminProductRouter = router28;
+
+// src/modules/adminUser/adminUser.router.ts
+import { Router as Router29 } from "express";
+
+// src/modules/adminUser/adminUser.controler.ts
+import status55 from "http-status";
+
+// src/modules/adminUser/adminUser.service.ts
+import status54 from "http-status";
+var list11 = async (q) => {
+  const page = Math.max(1, Number(q.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(q.limit) || 20));
+  const skip = (page - 1) * limit;
+  const where = {};
+  if (q.role && q.role !== "ALL") where.role = q.role;
+  if (q.status && q.status !== "ALL") where.status = q.status;
+  if (q.isDeleted === "true") where.isDeleted = true;
+  else if (q.isDeleted === "false") where.isDeleted = false;
+  if (q.emailVerified === "true") where.emailVerified = true;
+  if (q.emailVerified === "false") where.emailVerified = false;
+  if (q.search) {
+    where.OR = [
+      { name: { contains: q.search, mode: "insensitive" } },
+      { email: { contains: q.search, mode: "insensitive" } }
+    ];
+  }
+  const sortBy = q.sortBy ?? "createdAt";
+  const sortOrder = q.sortOrder ?? "desc";
+  const [data, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      orderBy: { [sortBy]: sortOrder },
+      skip,
+      take: limit,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        status: true,
+        emailVerified: true,
+        isDeleted: true,
+        image: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            orders: true,
+            reviews: true,
+            addresses: true
+          }
+        },
+        seller: {
+          select: { id: true, shopName: true, shopSlug: true, status: true }
+        }
+      }
+    }),
+    prisma.user.count({ where })
+  ]);
+  return {
+    data,
+    meta: { page, limit, total, totalPages: Math.ceil(total / limit) }
+  };
+};
+var getDetail3 = async (id) => {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      status: true,
+      emailVerified: true,
+      isDeleted: true,
+      deletedAt: true,
+      image: true,
+      createdAt: true,
+      updatedAt: true,
+      customer: true,
+      seller: {
+        select: {
+          id: true,
+          shopName: true,
+          shopSlug: true,
+          status: true,
+          totalSales: true,
+          orderCount: true,
+          productCount: true
+        }
+      },
+      admin: {
+        select: { id: true, name: true, email: true, contactNumber: true }
+      },
+      addresses: { take: 5, orderBy: { createdAt: "desc" } },
+      _count: {
+        select: {
+          orders: true,
+          reviews: true,
+          addresses: true,
+          notifications: true,
+          refundsRequested: true
+        }
+      }
+    }
+  });
+  if (!user) throw new AppError_default(status54.NOT_FOUND, "User not found");
+  const paid = await prisma.order.findMany({
+    where: { userId: id, paymentStatus: PaymentStatus.PAID },
+    select: { grandTotal: true }
+  });
+  const lifetimeSpend = paid.reduce((s, o) => s + toNumber(o.grandTotal), 0);
+  const lastOrder = await prisma.order.findFirst({
+    where: { userId: id },
+    orderBy: { placedAt: "desc" },
+    select: { id: true, orderNumber: true, status: true, grandTotal: true, placedAt: true }
+  });
+  const lastSession = await prisma.session.findFirst({
+    where: { userId: id },
+    orderBy: { updatedAt: "desc" },
+    select: { ipAddress: true, userAgent: true, updatedAt: true, expiresAt: true }
+  });
+  return {
+    ...user,
+    stats: {
+      lifetimeSpend: Math.round(lifetimeSpend * 100) / 100,
+      paidOrderCount: paid.length,
+      lastOrder,
+      lastSession
+    }
+  };
+};
+var ensureNotSelf = (targetUserId, actorUserId) => {
+  if (targetUserId === actorUserId) {
+    throw new AppError_default(
+      status54.BAD_REQUEST,
+      "You cannot perform this action on your own account"
+    );
+  }
+};
+var ensureNotLastAdmin = async (id) => {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: { role: true }
+  });
+  if (user?.role !== Role.ADMIN) return;
+  const remaining = await prisma.user.count({
+    where: {
+      role: Role.ADMIN,
+      isDeleted: false,
+      status: UserStatus.ACTIVE,
+      id: { not: id }
+    }
+  });
+  if (remaining === 0) {
+    throw new AppError_default(
+      status54.CONFLICT,
+      "Cannot modify the last active admin account"
+    );
+  }
+};
+var update10 = async (id, payload, actorUserId) => {
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (!target) throw new AppError_default(status54.NOT_FOUND, "User not found");
+  if (payload.role !== void 0 && payload.role !== target.role) {
+    ensureNotSelf(id, actorUserId);
+    await ensureNotLastAdmin(id);
+    if (payload.role === Role.ADMIN) {
+      throw new AppError_default(
+        status54.FORBIDDEN,
+        "Use the admin creation endpoint to promote a user to ADMIN"
+      );
+    }
+  }
+  if (payload.status !== void 0 && payload.status !== target.status && target.role === Role.ADMIN) {
+    ensureNotSelf(id, actorUserId);
+    await ensureNotLastAdmin(id);
+  }
+  const data = {};
+  if (payload.name !== void 0) data.name = payload.name;
+  if (payload.role !== void 0) data.role = payload.role;
+  if (payload.status !== void 0) data.status = payload.status;
+  if (payload.emailVerified !== void 0) data.emailVerified = payload.emailVerified;
+  return prisma.user.update({
+    where: { id },
+    data,
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      status: true,
+      emailVerified: true
+    }
+  });
+};
+var suspend = async (id, reason, actorUserId) => {
+  ensureNotSelf(id, actorUserId);
+  await ensureNotLastAdmin(id);
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (!target) throw new AppError_default(status54.NOT_FOUND, "User not found");
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id },
+      data: { status: UserStatus.SUSPENDED }
+    });
+    await tx.session.deleteMany({ where: { userId: id } });
+    await tx.notification.create({
+      data: {
+        userId: id,
+        type: NotificationType.SYSTEM,
+        title: "Account suspended",
+        message: reason
+      }
+    }).catch(() => null);
+  });
+  return { id, status: UserStatus.SUSPENDED, reason };
+};
+var block = async (id, reason, actorUserId) => {
+  ensureNotSelf(id, actorUserId);
+  await ensureNotLastAdmin(id);
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (!target) throw new AppError_default(status54.NOT_FOUND, "User not found");
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id },
+      data: { status: UserStatus.BLOCKED }
+    });
+    await tx.session.deleteMany({ where: { userId: id } });
+    await tx.notification.create({
+      data: {
+        userId: id,
+        type: NotificationType.SYSTEM,
+        title: "Account blocked",
+        message: reason
+      }
+    }).catch(() => null);
+  });
+  return { id, status: UserStatus.BLOCKED, reason };
+};
+var reactivate = async (id) => {
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (!target) throw new AppError_default(status54.NOT_FOUND, "User not found");
+  if (target.isDeleted) {
+    throw new AppError_default(
+      status54.CONFLICT,
+      "User is soft-deleted. Restore first."
+    );
+  }
+  return prisma.user.update({
+    where: { id },
+    data: { status: UserStatus.ACTIVE },
+    select: { id: true, status: true }
+  });
+};
+var softDelete3 = async (id, actorUserId) => {
+  ensureNotSelf(id, actorUserId);
+  await ensureNotLastAdmin(id);
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (!target) throw new AppError_default(status54.NOT_FOUND, "User not found");
+  if (target.isDeleted) {
+    throw new AppError_default(status54.CONFLICT, "User is already deleted");
+  }
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: /* @__PURE__ */ new Date(),
+        status: UserStatus.DELETED
+      }
+    });
+    await tx.session.deleteMany({ where: { userId: id } });
+    if (target.role === Role.CUSTOMER) {
+      await tx.customer.updateMany({
+        where: { userId: id },
+        data: { isDeleted: true, deletedAt: /* @__PURE__ */ new Date() }
+      });
+    } else if (target.role === Role.SELLER) {
+      await tx.seller.updateMany({
+        where: { userId: id },
+        data: { isDeleted: true, deletedAt: /* @__PURE__ */ new Date() }
+      });
+    } else if (target.role === Role.ADMIN) {
+      await tx.admin.updateMany({
+        where: { userId: id },
+        data: { isDeleted: true, deletedAt: /* @__PURE__ */ new Date() }
+      });
+    }
+  });
+  return { id, deleted: true };
+};
+var restore3 = async (id) => {
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (!target) throw new AppError_default(status54.NOT_FOUND, "User not found");
+  if (!target.isDeleted) {
+    throw new AppError_default(status54.CONFLICT, "User is not deleted");
+  }
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id },
+      data: {
+        isDeleted: false,
+        deletedAt: null,
+        status: UserStatus.ACTIVE
+      }
+    });
+    if (target.role === Role.CUSTOMER) {
+      await tx.customer.updateMany({
+        where: { userId: id },
+        data: { isDeleted: false, deletedAt: null }
+      });
+    } else if (target.role === Role.SELLER) {
+      await tx.seller.updateMany({
+        where: { userId: id },
+        data: { isDeleted: false, deletedAt: null }
+      });
+    } else if (target.role === Role.ADMIN) {
+      await tx.admin.updateMany({
+        where: { userId: id },
+        data: { isDeleted: false, deletedAt: null }
+      });
+    }
+  });
+  return { id, restored: true };
+};
+var getOrders = async (id, q) => {
+  const page = Math.max(1, Number(q.page) || 1);
+  const limit = Math.min(50, Math.max(1, Number(q.limit) || 10));
+  const skip = (page - 1) * limit;
+  const [data, total] = await Promise.all([
+    prisma.order.findMany({
+      where: { userId: id },
+      orderBy: { placedAt: "desc" },
+      skip,
+      take: limit,
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        paymentStatus: true,
+        grandTotal: true,
+        currency: true,
+        placedAt: true,
+        deliveredAt: true,
+        _count: { select: { items: true } }
+      }
+    }),
+    prisma.order.count({ where: { userId: id } })
+  ]);
+  return {
+    data,
+    meta: { page, limit, total, totalPages: Math.ceil(total / limit) }
+  };
+};
+var adminUserService = {
+  list: list11,
+  getDetail: getDetail3,
+  update: update10,
+  suspend,
+  block,
+  reactivate,
+  softDelete: softDelete3,
+  restore: restore3,
+  getOrders
+};
+
+// src/modules/adminUser/adminUser.controler.ts
+var list12 = catchAsync(async (req, res) => {
+  const result = await adminUserService.list(req.query);
+  sendResponse(res, {
+    httpStatusCode: status55.OK,
+    success: true,
+    message: "Users retrieved",
+    data: result.data,
+    meta: result.meta
+  });
+});
+var getDetail4 = catchAsync(async (req, res) => {
+  const data = await adminUserService.getDetail(req.params.id);
+  sendResponse(res, {
+    httpStatusCode: status55.OK,
+    success: true,
+    message: "User detail",
+    data
+  });
+});
+var update11 = catchAsync(async (req, res) => {
+  const data = await adminUserService.update(
+    req.params.id,
+    req.body,
+    req.user.userId
+  );
+  sendResponse(res, {
+    httpStatusCode: status55.OK,
+    success: true,
+    message: "User updated",
+    data
+  });
+});
+var suspend2 = catchAsync(async (req, res) => {
+  const data = await adminUserService.suspend(
+    req.params.id,
+    req.body.reason,
+    req.user.userId
+  );
+  sendResponse(res, {
+    httpStatusCode: status55.OK,
+    success: true,
+    message: "User suspended",
+    data
+  });
+});
+var block2 = catchAsync(async (req, res) => {
+  const data = await adminUserService.block(
+    req.params.id,
+    req.body.reason,
+    req.user.userId
+  );
+  sendResponse(res, {
+    httpStatusCode: status55.OK,
+    success: true,
+    message: "User blocked",
+    data
+  });
+});
+var reactivate2 = catchAsync(async (req, res) => {
+  const data = await adminUserService.reactivate(req.params.id);
+  sendResponse(res, {
+    httpStatusCode: status55.OK,
+    success: true,
+    message: "User reactivated",
+    data
+  });
+});
+var softDelete4 = catchAsync(async (req, res) => {
+  const data = await adminUserService.softDelete(
+    req.params.id,
+    req.user.userId
+  );
+  sendResponse(res, {
+    httpStatusCode: status55.OK,
+    success: true,
+    message: "User deleted",
+    data
+  });
+});
+var restore4 = catchAsync(async (req, res) => {
+  const data = await adminUserService.restore(req.params.id);
+  sendResponse(res, {
+    httpStatusCode: status55.OK,
+    success: true,
+    message: "User restored",
+    data
+  });
+});
+var getOrders2 = catchAsync(async (req, res) => {
+  const result = await adminUserService.getOrders(
+    req.params.id,
+    req.query
+  );
+  sendResponse(res, {
+    httpStatusCode: status55.OK,
+    success: true,
+    message: "User orders",
+    data: result.data,
+    meta: result.meta
+  });
+});
+var adminUserController = {
+  list: list12,
+  getDetail: getDetail4,
+  update: update11,
+  suspend: suspend2,
+  block: block2,
+  reactivate: reactivate2,
+  softDelete: softDelete4,
+  restore: restore4,
+  getOrders: getOrders2
+};
+
+// src/modules/adminUser/adminUser.validation.ts
+import { z as z23 } from "zod";
+var updateAdminUserSchema = z23.object({
+  body: z23.object({
+    name: z23.string().min(1).max(100).optional(),
+    role: z23.nativeEnum(Role).optional(),
+    status: z23.nativeEnum(UserStatus).optional(),
+    emailVerified: z23.boolean().optional()
+  }).strict().refine((v) => Object.keys(v).length > 0, {
+    message: "At least one field must be provided"
+  })
+});
+var userActionReasonSchema = z23.object({
+  body: z23.object({
+    reason: z23.string().min(3).max(500)
+  })
+});
+
+// src/modules/adminUser/adminUser.router.ts
+var router29 = Router29();
+router29.use(checkAuth(Role.ADMIN, Role.STAFF));
+router29.get("/", adminUserController.list);
+router29.get("/:id", adminUserController.getDetail);
+router29.get("/:id/orders", adminUserController.getOrders);
+router29.patch(
+  "/:id",
+  checkAuth(Role.ADMIN),
+  // role/status changes restricted to ADMIN
+  validateRequest(updateAdminUserSchema),
+  adminUserController.update
+);
+router29.post(
+  "/:id/suspend",
+  checkAuth(Role.ADMIN),
+  validateRequest(userActionReasonSchema),
+  adminUserController.suspend
+);
+router29.post(
+  "/:id/block",
+  checkAuth(Role.ADMIN),
+  validateRequest(userActionReasonSchema),
+  adminUserController.block
+);
+router29.post(
+  "/:id/reactivate",
+  checkAuth(Role.ADMIN),
+  adminUserController.reactivate
+);
+router29.delete(
+  "/:id",
+  checkAuth(Role.ADMIN),
+  adminUserController.softDelete
+);
+router29.post(
+  "/:id/restore",
+  checkAuth(Role.ADMIN),
+  adminUserController.restore
+);
+var adminUserRouter = router29;
+
+// src/modules/sellerProduct/sellerProduct.router.ts
+import { Router as Router30 } from "express";
+
+// src/modules/sellerProduct/sellerProduct.controler.ts
+import status57 from "http-status";
+
+// src/modules/sellerProduct/sellerProduct.service.ts
+import status56 from "http-status";
+var resolveSellerId = async (userId) => {
+  const seller = await prisma.seller.findUnique({
+    where: { userId },
+    select: { id: true, status: true, isDeleted: true }
+  });
+  if (!seller || seller.isDeleted) {
+    throw new AppError_default(status56.FORBIDDEN, "You don't have a seller profile");
+  }
+  if (seller.status !== SellerStatus.APPROVED) {
+    throw new AppError_default(
+      status56.FORBIDDEN,
+      `Your shop is not approved (status: ${seller.status})`
+    );
+  }
+  return seller.id;
+};
+var ensureOwnership = async (productId, sellerId) => {
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { id: true, sellerId: true, isDeleted: true, publishedAt: true }
+  });
+  if (!product) throw new AppError_default(status56.NOT_FOUND, "Product not found");
+  if (product.sellerId !== sellerId) {
+    throw new AppError_default(status56.FORBIDDEN, "This product belongs to another seller");
+  }
+  return product;
+};
+var list13 = async (userId, q) => {
+  const sellerId = await resolveSellerId(userId);
+  const page = Math.max(1, Number(q.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(q.limit) || 20));
+  const skip = (page - 1) * limit;
+  const where = { sellerId };
+  if (q.isDeleted === "true") where.isDeleted = true;
+  else if (q.isDeleted === "all") {
+  } else where.isDeleted = false;
+  if (q.status && q.status !== "ALL") where.status = q.status;
+  if (q.categoryId) where.categoryId = q.categoryId;
+  if (q.brandId) where.brandId = q.brandId;
+  if (q.isFeatured === "true") where.isFeatured = true;
+  if (q.isBestseller === "true") where.isBestseller = true;
+  if (q.outOfStock === "true") where.stock = { lte: 0 };
+  if (q.minPrice || q.maxPrice) {
+    where.price = {};
+    if (q.minPrice) where.price.gte = Number(q.minPrice);
+    if (q.maxPrice) where.price.lte = Number(q.maxPrice);
+  }
+  if (q.search) {
+    where.OR = [
+      { name: { contains: q.search, mode: "insensitive" } },
+      { sku: { contains: q.search, mode: "insensitive" } },
+      { slug: { contains: q.search, mode: "insensitive" } }
+    ];
+  }
+  if (q.lowStock === "true") {
+    const rows = await prisma.$queryRawUnsafe(
+      `SELECT id FROM products WHERE "sellerId" = $1 AND "trackInventory" = true AND stock <= "lowStockAlert" AND "isDeleted" = false`,
+      sellerId
+    );
+    const ids = rows.map((r) => r.id);
+    if (ids.length === 0) {
+      return { data: [], meta: { page, limit, total: 0, totalPages: 0 } };
+    }
+    where.id = { in: ids };
+  }
+  const sortBy = q.sortBy ?? "createdAt";
+  const sortOrder = q.sortOrder ?? "desc";
+  const [data, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      orderBy: { [sortBy]: sortOrder },
+      skip,
+      take: limit,
+      include: {
+        images: { orderBy: { sortOrder: "asc" }, take: 1 },
+        brand: { select: { id: true, name: true, slug: true } },
+        category: { select: { id: true, name: true, slug: true } },
+        _count: { select: { variants: true, reviews: true, questions: true } }
+      }
+    }),
+    prisma.product.count({ where })
+  ]);
+  return {
+    data,
+    meta: { page, limit, total, totalPages: Math.ceil(total / limit) }
+  };
+};
+var summary6 = async (userId) => {
+  const sellerId = await resolveSellerId(userId);
+  const [active, drafts, archived, outOfStock, lowStockRows, deletedCount] = await Promise.all([
+    prisma.product.count({
+      where: { sellerId, isDeleted: false, status: ProductStatus.ACTIVE }
+    }),
+    prisma.product.count({
+      where: { sellerId, isDeleted: false, status: ProductStatus.DRAFT }
+    }),
+    prisma.product.count({
+      where: { sellerId, isDeleted: false, status: ProductStatus.ARCHIVED }
+    }),
+    prisma.product.count({
+      where: { sellerId, isDeleted: false, stock: { lte: 0 } }
+    }),
+    prisma.$queryRawUnsafe(
+      `SELECT COUNT(*)::bigint AS count FROM products WHERE "sellerId" = $1 AND "trackInventory" = true AND stock <= "lowStockAlert" AND stock > 0 AND "isDeleted" = false`,
+      sellerId
+    ),
+    prisma.product.count({ where: { sellerId, isDeleted: true } })
+  ]);
+  return {
+    active,
+    drafts,
+    archived,
+    outOfStock,
+    lowStock: Number(lowStockRows[0]?.count ?? 0),
+    deleted: deletedCount
+  };
+};
+var getDetail5 = async (userId, productId) => {
+  const sellerId = await resolveSellerId(userId);
+  await ensureOwnership(productId, sellerId);
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    include: {
+      images: { orderBy: { sortOrder: "asc" } },
+      variants: true,
+      specifications: { orderBy: { sortOrder: "asc" } },
+      tags: true,
+      brand: true,
+      category: true,
+      _count: {
+        select: { orderItems: true, reviews: true, questions: true }
+      }
+    }
+  });
+  if (!product) throw new AppError_default(status56.NOT_FOUND, "Product not found");
+  const items = await prisma.orderItem.findMany({
+    where: {
+      productId,
+      order: { paymentStatus: PaymentStatus.PAID }
+    },
+    select: { quantity: true, lineTotal: true }
+  });
+  const unitsSold = items.reduce((s, i) => s + i.quantity, 0);
+  const revenue = items.reduce((s, i) => s + toNumber(i.lineTotal), 0);
+  const refundCount = await prisma.refundItem.count({
+    where: { orderItem: { productId } }
+  });
+  return {
+    ...product,
+    stats: {
+      unitsSold,
+      revenue: Math.round(revenue * 100) / 100,
+      refundCount,
+      refundRate: unitsSold > 0 ? Math.round(refundCount / unitsSold * 1e4) / 100 : 0
+    }
+  };
+};
+var update12 = async (userId, productId, payload) => {
+  const sellerId = await resolveSellerId(userId);
+  const existing = await ensureOwnership(productId, sellerId);
+  const allowed = [
+    "name",
+    "shortDesc",
+    "description",
+    "price",
+    "compareAtPrice",
+    "costPerItem",
+    "currency",
+    "stock",
+    "lowStockAlert",
+    "trackInventory",
+    "allowBackorder",
+    "weightGrams",
+    "widthMm",
+    "heightMm",
+    "depthMm",
+    "status",
+    "condition",
+    "isNewArrival",
+    "isOnSale",
+    "metaTitle",
+    "metaDescription",
+    "brandId",
+    "categoryId"
+  ];
+  const data = {};
+  for (const k of allowed) {
+    if (payload[k] !== void 0) data[k] = payload[k];
+  }
+  if (data.status && !["DRAFT", "ACTIVE", "OUT_OF_STOCK"].includes(data.status)) {
+    throw new AppError_default(
+      status56.BAD_REQUEST,
+      "Invalid status. Use DELETE to archive a product."
+    );
+  }
+  if (data.status === ProductStatus.ACTIVE && !existing.publishedAt) {
+    data.publishedAt = /* @__PURE__ */ new Date();
+  }
+  return prisma.product.update({ where: { id: productId }, data });
+};
+var softDelete5 = async (userId, productId) => {
+  const sellerId = await resolveSellerId(userId);
+  const existing = await ensureOwnership(productId, sellerId);
+  if (existing.isDeleted) {
+    throw new AppError_default(status56.CONFLICT, "Product is already deleted");
+  }
+  await prisma.$transaction(async (tx) => {
+    await tx.product.update({
+      where: { id: productId },
+      data: {
+        isDeleted: true,
+        deletedAt: /* @__PURE__ */ new Date(),
+        status: ProductStatus.ARCHIVED
+      }
+    });
+    await tx.seller.update({
+      where: { id: sellerId },
+      data: { productCount: { decrement: 1 } }
+    }).catch(() => null);
+  });
+  return { id: productId, deleted: true };
+};
+var restore5 = async (userId, productId) => {
+  const sellerId = await resolveSellerId(userId);
+  const existing = await ensureOwnership(productId, sellerId);
+  if (!existing.isDeleted) {
+    throw new AppError_default(status56.CONFLICT, "Product is not deleted");
+  }
+  await prisma.$transaction(async (tx) => {
+    await tx.product.update({
+      where: { id: productId },
+      data: {
+        isDeleted: false,
+        deletedAt: null,
+        status: ProductStatus.DRAFT
+      }
+    });
+    await tx.seller.update({
+      where: { id: sellerId },
+      data: { productCount: { increment: 1 } }
+    }).catch(() => null);
+  });
+  return { id: productId, restored: true };
+};
+var bulk3 = async (userId, payload) => {
+  const sellerId = await resolveSellerId(userId);
+  if (!payload.ids?.length) {
+    throw new AppError_default(status56.BAD_REQUEST, "ids[] is required");
+  }
+  const owned = await prisma.product.findMany({
+    where: { id: { in: payload.ids }, sellerId },
+    select: { id: true }
+  });
+  const ownedIds = owned.map((p) => p.id);
+  if (ownedIds.length === 0) {
+    throw new AppError_default(status56.NOT_FOUND, "No matching products in your shop");
+  }
+  const where = { id: { in: ownedIds } };
+  switch (payload.action) {
+    case "activate":
+      return prisma.product.updateMany({
+        where,
+        data: { status: ProductStatus.ACTIVE, publishedAt: /* @__PURE__ */ new Date() }
+      });
+    case "draft":
+      return prisma.product.updateMany({
+        where,
+        data: { status: ProductStatus.DRAFT }
+      });
+    case "archive":
+      return prisma.product.updateMany({
+        where,
+        data: { status: ProductStatus.ARCHIVED }
+      });
+    case "delete":
+      return prisma.product.updateMany({
+        where,
+        data: {
+          isDeleted: true,
+          deletedAt: /* @__PURE__ */ new Date(),
+          status: ProductStatus.ARCHIVED
+        }
+      });
+    case "restore":
+      return prisma.product.updateMany({
+        where,
+        data: {
+          isDeleted: false,
+          deletedAt: null,
+          status: ProductStatus.DRAFT
+        }
+      });
+    default:
+      throw new AppError_default(status56.BAD_REQUEST, "Unknown bulk action");
+  }
+};
+var sellerProductService = {
+  list: list13,
+  summary: summary6,
+  getDetail: getDetail5,
+  update: update12,
+  softDelete: softDelete5,
+  restore: restore5,
+  bulk: bulk3
+};
+
+// src/modules/sellerProduct/sellerProduct.controler.ts
+var list14 = catchAsync(async (req, res) => {
+  const result = await sellerProductService.list(req.user.userId, req.query);
+  sendResponse(res, {
+    httpStatusCode: status57.OK,
+    success: true,
+    message: "Products retrieved",
+    data: result.data,
+    meta: result.meta
+  });
+});
+var summary7 = catchAsync(async (req, res) => {
+  const result = await sellerProductService.summary(req.user.userId);
+  sendResponse(res, {
+    httpStatusCode: status57.OK,
+    success: true,
+    message: "Product summary retrieved",
+    data: result
+  });
+});
+var getDetail6 = catchAsync(async (req, res) => {
+  const result = await sellerProductService.getDetail(
+    req.user.userId,
+    req.params.id
+  );
+  sendResponse(res, {
+    httpStatusCode: status57.OK,
+    success: true,
+    message: "Product retrieved",
+    data: result
+  });
+});
+var update13 = catchAsync(async (req, res) => {
+  const result = await sellerProductService.update(
+    req.user.userId,
+    req.params.id,
+    req.body
+  );
+  sendResponse(res, {
+    httpStatusCode: status57.OK,
+    success: true,
+    message: "Product updated",
+    data: result
+  });
+});
+var remove11 = catchAsync(async (req, res) => {
+  const result = await sellerProductService.softDelete(
+    req.user.userId,
+    req.params.id
+  );
+  sendResponse(res, {
+    httpStatusCode: status57.OK,
+    success: true,
+    message: "Product deleted",
+    data: result
+  });
+});
+var restore6 = catchAsync(async (req, res) => {
+  const result = await sellerProductService.restore(
+    req.user.userId,
+    req.params.id
+  );
+  sendResponse(res, {
+    httpStatusCode: status57.OK,
+    success: true,
+    message: "Product restored",
+    data: result
+  });
+});
+var bulk4 = catchAsync(async (req, res) => {
+  const result = await sellerProductService.bulk(req.user.userId, req.body);
+  sendResponse(res, {
+    httpStatusCode: status57.OK,
+    success: true,
+    message: "Bulk action complete",
+    data: result
+  });
+});
+var sellerProductController = {
+  list: list14,
+  summary: summary7,
+  getDetail: getDetail6,
+  update: update13,
+  remove: remove11,
+  restore: restore6,
+  bulk: bulk4
+};
+
+// src/modules/sellerProduct/sellerProduct.validation.ts
+import { z as z24 } from "zod";
+var updateSellerProductSchema = z24.object({
+  body: z24.object({
+    name: z24.string().min(2).max(200).optional(),
+    shortDesc: z24.string().max(500).optional().nullable(),
+    description: z24.string().min(1).optional(),
+    price: z24.number().positive().optional(),
+    compareAtPrice: z24.number().positive().nullable().optional(),
+    costPerItem: z24.number().nonnegative().nullable().optional(),
+    currency: z24.string().length(3).optional(),
+    stock: z24.number().int().nonnegative().optional(),
+    lowStockAlert: z24.number().int().nonnegative().optional(),
+    trackInventory: z24.boolean().optional(),
+    allowBackorder: z24.boolean().optional(),
+    weightGrams: z24.number().int().nonnegative().optional(),
+    widthMm: z24.number().int().nonnegative().optional(),
+    heightMm: z24.number().int().nonnegative().optional(),
+    depthMm: z24.number().int().nonnegative().optional(),
+    status: z24.enum(["DRAFT", "ACTIVE", "OUT_OF_STOCK"]).optional(),
+    condition: z24.enum(["NEW", "REFURBISHED", "OPEN_BOX", "USED"]).optional(),
+    isNewArrival: z24.boolean().optional(),
+    isOnSale: z24.boolean().optional(),
+    metaTitle: z24.string().max(200).optional(),
+    metaDescription: z24.string().max(500).optional(),
+    brandId: z24.string().uuid().nullable().optional(),
+    categoryId: z24.string().uuid().optional()
+  }).strict().refine((d) => Object.keys(d).length > 0, {
+    message: "At least one field must be provided"
+  })
+});
+var bulkSellerProductSchema = z24.object({
+  body: z24.object({
+    ids: z24.array(z24.string().uuid("Each id must be a UUID")).min(1, "ids[] cannot be empty").max(500, "Cannot bulk-act on more than 500 products at once"),
+    action: z24.enum(["activate", "draft", "archive", "delete", "restore"])
+  })
+});
+
+// src/modules/sellerProduct/sellerProduct.router.ts
+var router30 = Router30();
+router30.use(checkAuth(Role.SELLER));
+router30.get("/", sellerProductController.list);
+router30.get("/summary", sellerProductController.summary);
+router30.post(
+  "/bulk",
+  validateRequest(bulkSellerProductSchema),
+  sellerProductController.bulk
+);
+router30.get("/:id", sellerProductController.getDetail);
+router30.patch(
+  "/:id",
+  validateRequest(updateSellerProductSchema),
+  sellerProductController.update
+);
+router30.delete("/:id", sellerProductController.remove);
+router30.post("/:id/restore", sellerProductController.restore);
+var sellerProductRouter = router30;
+
+// src/index.ts
+var router31 = Router31();
+router31.use("/auth", authRoutes);
+router31.use("/users", userRouter);
+router31.use("/admin/products", adminProductRouter);
+router31.use("/admin/users", adminUserRouter);
+router31.use("/admin", adminRouter);
+router31.use("/categories", categoryRouter);
+router31.use("/brands", brandRouter);
+router31.use("/products", productRouter);
+router31.use("/search", searchRouter);
+router31.use("/seller/products", sellerProductRouter);
+router31.use("/sellers", sellerRouter);
+router31.use("/cart", cartRouter);
+router31.use("/orders", orderRouter);
+router31.use("/seller-orders", sellerOrderRouter);
+router31.use("/payouts", payoutRouter);
+router31.use("/addresses", addressRouter);
+router31.use("/reviews", reviewRouter);
+router31.use("/wishlist", wishlistRouter);
+router31.use("/coupons", couponRouter);
+router31.use("/refunds", refundRouter);
+router31.use("/inventory", inventoryRouter);
+router31.use("/shipping", shippingRouter);
+router31.use("/", productQaRouter);
+router31.use("/recommendations", recommendationRouter);
+router31.use("/", stripeConnectRouter);
+router31.use("/payments", PaymentRoutes);
+router31.use("/notifications", notificationRouter);
+router31.use("/ai", aiRoutes);
+router31.use("/stats", StatsRoutes);
+var indexRoutes = router31;
 
 export {
   auth,

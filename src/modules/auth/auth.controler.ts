@@ -155,7 +155,7 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
 });
 
 const googleLogin = catchAsync(async (_req: Request, res: Response) => {
-  res.redirect(`${envVars.BETTER_AUTH_URL}/api/auth/sign-in/social?provider=google`);
+  res.redirect(`${envVars.BETTER_AUTH_URL}/api/auth/sign-in/social/google`);
 });
 
 const googleLoginSuccess = catchAsync(async (req: Request, res: Response) => {

@@ -12,6 +12,7 @@
     "build": "tsup src/index.ts src/server.ts --format esm --platform node --target node20 --outDir api --external pg-native",
     "start": "node api/server.js",
     "seed": "tsx prisma/seed.ts",
+    "seed:demo": "tsx prisma/seed-demo.ts",
     "test:webhook": "tsx prisma/test-stripe-webhook.ts",
     "service:up": "npm run build && npx prisma migrate deploy && pm2 start ecosystem.config.cjs --env production --update-env && pm2 save",
     "service:restart": "pm2 restart nexora-backend --update-env && pm2 save",

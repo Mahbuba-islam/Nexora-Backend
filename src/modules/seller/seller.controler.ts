@@ -144,6 +144,19 @@ const adminReinstateSeller = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const adminMessageSeller = catchAsync(async (req: Request, res: Response) => {
+  const result = await sellerService.adminMessageSeller(
+    req.params.id as string,
+    req.body
+  );
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Message sent to seller",
+    data: result,
+  });
+});
+
 const adminGetSellerDetail = catchAsync(async (req: Request, res: Response) => {
   const result = await sellerService.adminGetSellerDetail(req.params.id as string);
   sendResponse(res, {
@@ -193,4 +206,5 @@ export const sellerController = {
   adminRejectSeller,
   adminSuspendSeller,
   adminReinstateSeller,
+  adminMessageSeller,
 };

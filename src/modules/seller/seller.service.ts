@@ -408,6 +408,23 @@ const adminReinstateSeller = async (id: string, _adminUserId: string) => {
   });
 };
 
+const adminMessageSeller = async (
+  id: string,
+  payload: { title: string; message: string; actionUrl?: string }
+) => {
+  const seller = await prisma.seller.findUnique({ where: { id } });
+  if (!seller) throw new AppError(status.NOT_FOUND, "Seller not found");
+  await notificationService.createNotification({
+    userId: seller.userId,
+    type: NotificationType.SYSTEM,
+    title: payload.title,
+    message: payload.message,
+    actionUrl: payload.actionUrl ?? "/seller/dashboard",
+    metadata: { sellerId: id, fromAdmin: true },
+  });
+  return { id, sent: true };
+};
+
 /* -------------------------------------------------------------- */
 /*  Admin: detail w/ KPIs, edit, soft-delete                      */
 /* -------------------------------------------------------------- */
@@ -665,4 +682,5 @@ export const sellerService = {
   adminRejectSeller,
   adminSuspendSeller,
   adminReinstateSeller,
+  adminMessageSeller,
 };

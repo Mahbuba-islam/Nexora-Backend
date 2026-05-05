@@ -5,6 +5,7 @@ import { Role } from "../../generated/enums";
 import { sellerController } from "./seller.controler";
 import {
   adminApproveSellerSchema,
+  adminMessageSellerSchema,
   adminRejectSellerSchema,
   adminSuspendSellerSchema,
   adminUpdateSellerSchema,
@@ -90,6 +91,12 @@ router.patch(
   "/admin/:id/reinstate",
   checkAuth(Role.ADMIN),
   sellerController.adminReinstateSeller
+);
+router.post(
+  "/admin/:id/message",
+  checkAuth(Role.ADMIN, Role.STAFF),
+  validateRequest(adminMessageSellerSchema),
+  sellerController.adminMessageSeller
 );
 
 export const sellerRouter = router;

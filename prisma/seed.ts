@@ -710,6 +710,304 @@ const products: ProductSeed[] = [
 ];
 
 // ---------------------------------------------------------------
+// Image pools (per leaf category) — used to enrich every product to
+// at least 3 images, matching industry-standard PDP carousels.
+// ---------------------------------------------------------------
+
+const CAT_IMG_POOL: Record<string, string[]> = {
+  "men-tshirts": ["photo-1521572163474-6864f9cf17ab", "photo-1583743814966-8936f5b7be1a", "photo-1576566588028-4147f3842f27", "photo-1618354691373-d851c5c3a990"],
+  "men-shirts": ["photo-1516257984-b1b4d707412e", "photo-1602810318383-e386cc2a3ccf", "photo-1603252109303-2751441dd157", "photo-1593030761757-71fae45fa0e7"],
+  "men-pants": ["photo-1542272604-787c3835535d", "photo-1604176354204-9268737828e4", "photo-1473966968600-fa801b869a1a", "photo-1551854838-212c50b4c184"],
+  "men-jackets": ["photo-1591047139829-d91aecb6caea", "photo-1551028719-00167b16eac5", "photo-1544966503-7cc5ac882d5f", "photo-1539533113208-f6df8cc8b543"],
+  "men-shoes": ["photo-1542291026-7eec264c27ff", "photo-1600185365483-26d7a4cc7519", "photo-1595950653106-6c9ebd614d3a", "photo-1606107557195-0e29a4b5b4aa"],
+  "women-dresses": ["photo-1572804013309-59a88b7e92f1", "photo-1539008835657-9e8e9680c956", "photo-1496747611176-843222e1e57c", "photo-1566174053879-31528523f8ae"],
+  "women-tops": ["photo-1485231183945-fffde7cc051e", "photo-1583744946564-b52ac1c389c8", "photo-1551803091-e20673f15770", "photo-1564257631407-4deb1f99d992"],
+  "women-bottoms": ["photo-1551489186-cf8726f514f8", "photo-1594633313593-bab3825d0caf", "photo-1582418702059-97ebafb35d09", "photo-1605518216938-7c31b7b14ad0"],
+  "women-bags": ["photo-1584917865442-de89df76afd3", "photo-1548036328-c9fa89d128fa", "photo-1591561954557-26941169b49e", "photo-1566150905458-1bf1fc113f0d"],
+  "women-shoes": ["photo-1543163521-1bf539c55dd2", "photo-1581101767113-1677fc2beaa8", "photo-1535043934128-cf0b28d52f95", "photo-1518049362265-d5b2a6467637"],
+  "kids-boys": ["photo-1503454537195-1dcabb73ffb9", "photo-1519278409-1f56fdda7485", "photo-1622290291468-a28f7a7dc6a8", "photo-1518831959646-742c3a14ebf7"],
+  "kids-girls": ["photo-1518831959646-742c3a14ebf7", "photo-1519689680058-324335c77eba", "photo-1503944168849-8bf86bdc8d8b", "photo-1572213426852-0e4ed8f41ed0"],
+  "kids-toys": ["photo-1545558014-8692077e9b5c", "photo-1584824486509-112e4181ff6b", "photo-1566576912321-d58ddd7a6088", "photo-1558877385-81a1c7e67d72"],
+  "kids-baby": ["photo-1522771930-78848d9293e8", "photo-1503454537195-1dcabb73ffb9", "photo-1519689680058-324335c77eba", "photo-1544717297-fa95b6ee9643"],
+  "tech-smartphones": ["photo-1592286927505-c0a4d3f49f30", "photo-1610945265064-0e34e5519bbf", "photo-1565849904461-04a58ad377e0", "photo-1511707171634-5f897ff02aa9"],
+  "tech-laptops": ["photo-1517336714731-489689fd1ca8", "photo-1496181133206-80ce9b88a853", "photo-1593642632559-0c6d3fc62b89", "photo-1525547719571-a2d4ac8945e2"],
+  "tech-audio": ["photo-1583394838336-acd977736f90", "photo-1545127398-14699f92334b", "photo-1546435770-a3e426bf472b", "photo-1558379852-cce0deddd9ce"],
+  "tech-wearables": ["photo-1546868871-7041f2a55e12", "photo-1579586337278-3befd40fd17a", "photo-1523275335684-37898b6baf30", "photo-1508685096489-7aacd43bd3b1"],
+  "tech-accessories": ["photo-1609592424823-3d6e3a0f3f02", "photo-1606760227091-3dd870d97f1d", "photo-1583863788434-e58a36330cf0", "photo-1572569511254-d8f925fe2cbb"],
+  "beauty-skincare": ["photo-1556228720-195a672e8a03", "photo-1620916566398-39f1143ab7be", "photo-1571781926291-c477ebfd024b", "photo-1608248543803-ba4f8c70ae0b"],
+  "beauty-makeup": ["photo-1586495777744-4413f21062fa", "photo-1631214540242-3cd8c4b0b3b8", "photo-1522335789203-aaa6e0b8d96b", "photo-1512496015851-a90fb38ba796"],
+  "beauty-fragrance": ["photo-1541643600914-78b084683601", "photo-1592945403244-b3fbafd7f539", "photo-1547887537-6158d64c35b3", "photo-1615634260167-c8cdede054de"],
+  "beauty-hair": ["photo-1522338242992-e1a54906a8da", "photo-1526045478516-99145907023c", "photo-1571875257727-256c39da42af", "photo-1600948836101-f9ffda59d250"],
+  "home-decor": ["photo-1533090481720-856c6e3c1fdc", "photo-1513519245088-0e12902e5a38", "photo-1578500494198-246f612d3b3d", "photo-1545454675-3531b543be5d"],
+  "home-kitchen": ["photo-1556909114-44e3e9399c2b", "photo-1556909190-eccf4a8bf97a", "photo-1574269909862-7e1d70bb8078", "photo-1607894007-d35d40e1e0db"],
+  "home-bedding": ["photo-1505691938895-1758d7feb511", "photo-1540518614846-7eded433c457", "photo-1522771930-78848d9293e8", "photo-1505693416388-ac5ce068fe85"],
+};
+
+function enrichImages(p: ProductSeed): ImageSeed[] {
+  const out: ImageSeed[] = p.images.slice();
+  const seen = new Set(out.map((i) => i.url));
+  const pool = CAT_IMG_POOL[p.categorySlug] ?? [];
+  for (const id of pool) {
+    if (out.length >= 3) break;
+    const url = IMG(id);
+    if (!seen.has(url)) {
+      out.push({ url, alt: p.name });
+      seen.add(url);
+    }
+  }
+  // Fallback if pool was empty: pad to 3 by re-using primary
+  while (out.length < 3 && out.length > 0) {
+    out.push({ url: out[0].url, alt: p.name });
+  }
+  return out.map((img, idx) => ({
+    url: img.url,
+    alt: img.alt ?? p.name,
+    isPrimary: idx === 0,
+  }));
+}
+
+// ---------------------------------------------------------------
+// Bonus products — fills out every category and brand for a
+// production-grade catalog (varied counts per (category × brand)).
+// ---------------------------------------------------------------
+
+type QuickFlags = "feat" | "best" | "new" | "sale";
+
+function mk(opts: {
+  shop: string;
+  slug: string;
+  sku: string;
+  name: string;
+  short: string;
+  desc: string;
+  price: number;
+  cmp?: number;
+  stock: number;
+  brand: string;
+  cat: string;
+  flags?: QuickFlags[];
+  tags?: string[];
+  specs?: SpecSeed[];
+}): ProductSeed {
+  const f = new Set<QuickFlags>(opts.flags ?? []);
+  return {
+    shopSlug: opts.shop,
+    slug: opts.slug,
+    sku: opts.sku,
+    name: opts.name,
+    shortDesc: opts.short,
+    description: opts.desc,
+    price: opts.price,
+    compareAtPrice: opts.cmp,
+    stock: opts.stock,
+    isFeatured: f.has("feat"),
+    isBestseller: f.has("best"),
+    isNewArrival: f.has("new"),
+    isOnSale: f.has("sale") || opts.cmp != null,
+    brandSlug: opts.brand,
+    categorySlug: opts.cat,
+    tagSlugs: opts.tags,
+    images: [], // filled by enrichImages()
+    specifications: opts.specs,
+  };
+}
+
+const bonusProducts: ProductSeed[] = [
+  // -------- Men's T-Shirts --------
+  mk({ shop: "vogue-threads", slug: "nike-dri-fit-tee", sku: "VT-MTSH-N01", name: "Nike Dri-FIT Performance Tee", short: "Sweat-wicking athletic tee.", desc: "Dri-FIT technology pulls moisture away from your skin so you stay dry. Lightweight knit with a relaxed athletic fit.", price: 35, cmp: 45, stock: 90, brand: "nike", cat: "men-tshirts", flags: ["best", "sale"], tags: ["bestseller", "on-sale"] }),
+  mk({ shop: "vogue-threads", slug: "adidas-trefoil-tee", sku: "VT-MTSH-A02", name: "Adidas Trefoil Logo Tee", short: "Iconic trefoil cotton tee.", desc: "Soft cotton jersey tee featuring the classic Trefoil logo at the chest. Regular fit.", price: 30, stock: 110, brand: "adidas", cat: "men-tshirts", tags: ["trending"] }),
+  mk({ shop: "vogue-threads", slug: "zara-striped-crew-tee", sku: "VT-MTSH-Z03", name: "Zara Striped Crew Tee", short: "Breton-stripe cotton tee.", desc: "Mid-weight cotton jersey tee with classic Breton stripes and ribbed crew neck.", price: 25, stock: 70, brand: "zara", cat: "men-tshirts" }),
+  mk({ shop: "vogue-threads", slug: "levis-vintage-logo-tee", sku: "VT-MTSH-L04", name: "Levi's Vintage Logo Tee", short: "Soft-washed graphic tee.", desc: "Vintage-washed cotton tee with a retro chest logo. Pre-shrunk and pre-softened.", price: 28, stock: 85, brand: "levis", cat: "men-tshirts", flags: ["new"], tags: ["new-arrival"] }),
+
+  // -------- Men's Shirts --------
+  mk({ shop: "vogue-threads", slug: "hm-oxford-button-down", sku: "VT-MSH-H01", name: "H&M Oxford Button-Down", short: "Classic oxford in slim fit.", desc: "Pure cotton oxford with a button-down collar and mother-of-pearl buttons.", price: 40, stock: 60, brand: "hm", cat: "men-shirts" }),
+  mk({ shop: "vogue-threads", slug: "levis-western-denim-shirt", sku: "VT-MSH-L02", name: "Levi's Western Denim Shirt", short: "Yoke-shoulder western shirt.", desc: "Classic western denim shirt with snap front and chest flap pockets.", price: 69, stock: 35, brand: "levis", cat: "men-shirts", tags: ["premium"] }),
+  mk({ shop: "vogue-threads", slug: "adidas-track-polo", sku: "VT-MSH-A03", name: "Adidas Track Polo", short: "Performance pique polo.", desc: "Three-stripes pique polo with moisture-wicking fabric and ribbed collar.", price: 45, stock: 50, brand: "adidas", cat: "men-shirts" }),
+
+  // -------- Men's Pants --------
+  mk({ shop: "vogue-threads", slug: "zara-tapered-chinos", sku: "VT-MPN-Z01", name: "Zara Tapered Chinos", short: "Stretch-cotton chino pants.", desc: "Tapered chinos in a soft cotton-stretch twill with a clean, modern silhouette.", price: 55, stock: 40, brand: "zara", cat: "men-pants" }),
+  mk({ shop: "vogue-threads", slug: "hm-slim-joggers", sku: "VT-MPN-H02", name: "H&M Slim Joggers", short: "Lounge-ready jersey joggers.", desc: "Brushed-back jersey joggers with elasticated waist and tapered leg.", price: 32, stock: 80, brand: "hm", cat: "men-pants", flags: ["sale"], cmp: 42 }),
+
+  // -------- Men's Jackets --------
+  mk({ shop: "vogue-threads", slug: "levis-trucker-denim-jacket", sku: "VT-MJK-L01", name: "Levi's Trucker Denim Jacket", short: "Iconic trucker denim jacket.", desc: "The original trucker silhouette in rigid denim. Button front, chest flap pockets.", price: 98, stock: 30, brand: "levis", cat: "men-jackets", flags: ["best"], tags: ["bestseller", "premium"] }),
+  mk({ shop: "vogue-threads", slug: "nike-windbreaker", sku: "VT-MJK-N02", name: "Nike Windbreaker", short: "Packable lightweight windbreaker.", desc: "Water-repellent ripstop windbreaker that packs into its own pocket.", price: 89, cmp: 110, stock: 45, brand: "nike", cat: "men-jackets", flags: ["sale"], tags: ["on-sale"] }),
+
+  // -------- Men's Shoes --------
+  mk({ shop: "vogue-threads", slug: "adidas-ultraboost-22", sku: "VT-MSHO-A01", name: "Adidas Ultraboost 22", short: "Energy-returning running shoes.", desc: "Boost cushioning, Primeknit upper, and Continental rubber outsole. Built for long miles.", price: 179, stock: 40, brand: "adidas", cat: "men-shoes", flags: ["feat"], tags: ["premium"] }),
+  mk({ shop: "vogue-threads", slug: "zara-leather-loafers", sku: "VT-MSHO-Z02", name: "Zara Leather Loafers", short: "Polished penny loafers.", desc: "Hand-finished leather penny loafers with leather soles. Made in Spain.", price: 99, stock: 25, brand: "zara", cat: "men-shoes" }),
+  mk({ shop: "vogue-threads", slug: "nike-air-force-1", sku: "VT-MSHO-N03", name: "Nike Air Force 1 '07", short: "Iconic court sneaker.", desc: "The original AF1 silhouette in full-grain leather with classic Air cushioning.", price: 110, stock: 80, brand: "nike", cat: "men-shoes", flags: ["best"], tags: ["bestseller"] }),
+
+  // -------- Women's Dresses --------
+  mk({ shop: "vogue-threads", slug: "hm-linen-wrap-dress", sku: "VT-WDR-H01", name: "H&M Linen Wrap Dress", short: "Breezy linen-blend wrap.", desc: "Lightweight linen-blend dress with a self-tie wrap front and short flutter sleeves.", price: 49, stock: 55, brand: "hm", cat: "women-dresses" }),
+  mk({ shop: "vogue-threads", slug: "adidas-tennis-dress", sku: "VT-WDR-A02", name: "Adidas Tennis Dress", short: "Performance tennis dress.", desc: "Built-in shorts, AEROREADY moisture management, and ribbed collar.", price: 79, stock: 30, brand: "adidas", cat: "women-dresses" }),
+  mk({ shop: "vogue-threads", slug: "zara-satin-slip-dress", sku: "VT-WDR-Z03", name: "Zara Satin Slip Dress", short: "Bias-cut satin slip dress.", desc: "Liquid satin midi slip with adjustable straps and bias-cut silhouette.", price: 79, stock: 40, brand: "zara", cat: "women-dresses", flags: ["new"], tags: ["new-arrival", "trending"] }),
+  mk({ shop: "vogue-threads", slug: "levis-denim-pinafore", sku: "VT-WDR-L04", name: "Levi's Denim Pinafore Dress", short: "Classic denim pinafore.", desc: "Heavyweight rigid denim pinafore with adjustable straps and patch pockets.", price: 89, stock: 25, brand: "levis", cat: "women-dresses" }),
+
+  // -------- Women's Tops --------
+  mk({ shop: "vogue-threads", slug: "zara-silk-blouse", sku: "VT-WTP-Z01", name: "Zara Silk Blouse", short: "Pure-silk button-up blouse.", desc: "100% mulberry silk blouse with a relaxed fit and shell buttons.", price: 69, stock: 60, brand: "zara", cat: "women-tops", tags: ["premium"] }),
+  mk({ shop: "vogue-threads", slug: "hm-ribbed-tank", sku: "VT-WTP-H02", name: "H&M Ribbed Tank", short: "Stretch ribbed cotton tank.", desc: "Soft ribbed cotton-modal tank with scooped neckline. Wear alone or layered.", price: 19, stock: 200, brand: "hm", cat: "women-tops" }),
+  mk({ shop: "vogue-threads", slug: "nike-sports-bra", sku: "VT-WTP-N03", name: "Nike Sports Bra", short: "Medium-support training bra.", desc: "Dri-FIT sports bra with removable pads and breathable mesh back panel.", price: 35, stock: 100, brand: "nike", cat: "women-tops", flags: ["best"], tags: ["bestseller"] }),
+  mk({ shop: "vogue-threads", slug: "adidas-crop-hoodie", sku: "VT-WTP-A04", name: "Adidas Crop Hoodie", short: "Cropped fleece hoodie.", desc: "Brushed-back fleece cropped hoodie with kangaroo pocket and drawcord hood.", price: 65, stock: 50, brand: "adidas", cat: "women-tops" }),
+
+  // -------- Women's Bottoms --------
+  mk({ shop: "vogue-threads", slug: "levis-501-skinny", sku: "VT-WBT-L01", name: "Levi's 501 Skinny Jeans", short: "Iconic 501 in skinny fit.", desc: "Rigid stretch denim with the original 501 styling, reimagined in a modern skinny silhouette.", price: 89, cmp: 110, stock: 70, brand: "levis", cat: "women-bottoms", flags: ["sale", "best"], tags: ["bestseller", "on-sale"] }),
+  mk({ shop: "vogue-threads", slug: "zara-pleated-midi-skirt", sku: "VT-WBT-Z02", name: "Zara Pleated Midi Skirt", short: "Sunray-pleated midi skirt.", desc: "Sunray-pleated satin midi skirt with elasticated waist.", price: 59, stock: 35, brand: "zara", cat: "women-bottoms" }),
+  mk({ shop: "vogue-threads", slug: "hm-wide-leg-trousers", sku: "VT-WBT-H03", name: "H&M Wide-Leg Trousers", short: "High-rise wide-leg trousers.", desc: "Tailored wide-leg trousers with creased fronts and side pockets.", price: 49, stock: 60, brand: "hm", cat: "women-bottoms" }),
+
+  // -------- Women's Bags --------
+  mk({ shop: "vogue-threads", slug: "hm-mini-tote", sku: "VT-WBG-H01", name: "H&M Mini Tote", short: "Structured mini tote bag.", desc: "Vegan-leather mini tote with detachable crossbody strap and gold-tone hardware.", price: 35, stock: 80, brand: "hm", cat: "women-bags" }),
+  mk({ shop: "vogue-threads", slug: "zara-chain-shoulder-bag", sku: "VT-WBG-Z02", name: "Zara Chain Shoulder Bag", short: "Quilted chain shoulder bag.", desc: "Quilted faux-leather shoulder bag with metal chain strap and turn-lock closure.", price: 79, stock: 30, brand: "zara", cat: "women-bags" }),
+
+  // -------- Women's Shoes --------
+  mk({ shop: "vogue-threads", slug: "nike-air-max-90-w", sku: "VT-WSHO-N01", name: "Nike Air Max 90 (Women)", short: "Iconic Air Max 90.", desc: "Visible Max Air cushioning, no-sew overlays, and waffle outsole. A timeless icon.", price: 130, stock: 55, brand: "nike", cat: "women-shoes", flags: ["best"], tags: ["bestseller"] }),
+  mk({ shop: "vogue-threads", slug: "adidas-stan-smith-w", sku: "VT-WSHO-A02", name: "Adidas Stan Smith", short: "Classic court sneaker.", desc: "Iconic minimal court sneaker in soft leather with perforated 3-stripes.", price: 95, stock: 70, brand: "adidas", cat: "women-shoes" }),
+  mk({ shop: "vogue-threads", slug: "zara-block-heel-sandals", sku: "VT-WSHO-Z03", name: "Zara Block-Heel Sandals", short: "Strappy block-heel sandals.", desc: "Square-toe leather sandals with adjustable ankle strap and 75mm block heel.", price: 69, stock: 40, brand: "zara", cat: "women-shoes", flags: ["new"], tags: ["new-arrival"] }),
+
+  // -------- Kids Boys --------
+  mk({ shop: "kids-world", slug: "ls-striped-polo", sku: "KW-BTS-005", name: "Striped Cotton Polo", short: "Soft pique polo for boys.", desc: "Combed cotton pique polo with embroidered chest detail. Ages 3-10.", price: 18, stock: 60, brand: "little-sprout", cat: "kids-boys", tags: ["eco-friendly"] }),
+  mk({ shop: "kids-world", slug: "hm-boys-cargo-shorts", sku: "KW-BTS-006", name: "Boys' Cargo Shorts", short: "Durable cotton cargo shorts.", desc: "Cotton-twill cargo shorts with side pockets and adjustable waist. Ages 4-12.", price: 22, stock: 75, brand: "hm", cat: "kids-boys" }),
+
+  // -------- Kids Girls --------
+  mk({ shop: "kids-world", slug: "ls-floral-romper", sku: "KW-GDR-005", name: "Floral Cotton Romper", short: "Breezy floral romper.", desc: "Soft cotton romper in a sweet floral print with elastic waist. Ages 2-7.", price: 26, stock: 50, brand: "little-sprout", cat: "kids-girls", tags: ["eco-friendly"] }),
+  mk({ shop: "kids-world", slug: "hm-girls-denim-jacket", sku: "KW-GDR-006", name: "Girls' Denim Jacket", short: "Classic kids' denim jacket.", desc: "Soft-washed denim jacket with chest pockets and metal buttons. Ages 4-10.", price: 36, stock: 40, brand: "hm", cat: "kids-girls" }),
+
+  // -------- Kids Toys --------
+  mk({ shop: "kids-world", slug: "ls-plush-bunny", sku: "KW-TY-006", name: "Plush Bunny Friend", short: "Super-soft plush bunny.", desc: "Hypoallergenic plush bunny with embroidered features (no small parts). 30cm tall.", price: 19, stock: 130, brand: "little-sprout", cat: "kids-toys", flags: ["best"], tags: ["bestseller"] }),
+  mk({ shop: "kids-world", slug: "ls-building-blocks", sku: "KW-TY-007", name: "Wooden Building Blocks (50pc)", short: "50-piece wooden block set.", desc: "Beech-wood building blocks finished with non-toxic water-based stains.", price: 34, stock: 90, brand: "little-sprout", cat: "kids-toys", tags: ["eco-friendly"] }),
+  mk({ shop: "kids-world", slug: "ls-magnetic-tiles", sku: "KW-TY-008", name: "Magnetic Tile Set (60pc)", short: "STEM magnetic building tiles.", desc: "Translucent magnetic tiles for endless 2D and 3D construction. STEM-approved.", price: 49, cmp: 59, stock: 70, brand: "little-sprout", cat: "kids-toys", flags: ["sale", "feat"], tags: ["on-sale"] }),
+
+  // -------- Kids Baby --------
+  mk({ shop: "kids-world", slug: "ls-muslin-swaddles-4pk", sku: "KW-BB-007", name: "Muslin Swaddles 4-Pack", short: "Breathable muslin swaddles.", desc: "Pre-washed organic cotton muslin swaddles. Generous 120x120cm size.", price: 32, stock: 120, brand: "little-sprout", cat: "kids-baby", tags: ["eco-friendly"] }),
+  mk({ shop: "kids-world", slug: "ls-baby-booties", sku: "KW-BB-008", name: "Soft Baby Booties", short: "Anti-slip soft booties.", desc: "Knit booties with non-slip soles and stretch ankle. 0-12 months.", price: 14, stock: 150, brand: "little-sprout", cat: "kids-baby" }),
+
+  // -------- Smartphones --------
+  mk({ shop: "techhub", slug: "apple-iphone-15", sku: "TH-IP15-128", name: "Apple iPhone 15", short: "iPhone 15 with USB-C and 48MP camera.", desc: '6.1" Super Retina XDR, A16 Bionic chip, USB-C, 48MP main camera, Dynamic Island.', price: 799, stock: 60, brand: "apple", cat: "tech-smartphones", flags: ["best"], tags: ["bestseller"], specs: [{ group: "Display", label: "Size", value: '6.1" OLED' }, { group: "Performance", label: "Chip", value: "A16 Bionic" }, { group: "Storage", label: "Capacity", value: "128 GB" }] }),
+  mk({ shop: "techhub", slug: "samsung-galaxy-a55", sku: "TH-A55-128", name: "Samsung Galaxy A55", short: "Mid-range with flagship-style design.", desc: "Super AMOLED 120Hz, Exynos 1480, 50MP triple camera, 5000mAh battery.", price: 499, stock: 90, brand: "samsung", cat: "tech-smartphones" }),
+
+  // -------- Laptops --------
+  mk({ shop: "techhub", slug: "samsung-galaxy-book4-pro", sku: "TH-GB4P-512", name: "Samsung Galaxy Book4 Pro", short: "Featherlight 14\" OLED laptop.", desc: 'Intel Core Ultra 7, 14" 3K AMOLED touch, 16GB LPDDR5X, 512GB SSD.', price: 1099, stock: 18, brand: "samsung", cat: "tech-laptops", flags: ["new"], tags: ["new-arrival"] }),
+  mk({ shop: "techhub", slug: "sony-vaio-sx14", sku: "TH-VAIO-SX14", name: "Sony VAIO SX14", short: "Ultra-light premium business laptop.", desc: 'Magnesium chassis, 14" 4K, 13th-gen Core i7, 16GB RAM, 1TB SSD.', price: 1499, stock: 12, brand: "sony", cat: "tech-laptops", tags: ["premium"] }),
+
+  // -------- Audio --------
+  mk({ shop: "techhub", slug: "apple-airpods-pro-2", sku: "TH-APP2", name: "Apple AirPods Pro 2", short: "Active noise-cancelling earbuds.", desc: "H2 chip, adaptive transparency, personalized spatial audio, MagSafe USB-C case.", price: 249, stock: 200, brand: "apple", cat: "tech-audio", flags: ["best", "feat"], tags: ["bestseller", "premium"] }),
+  mk({ shop: "techhub", slug: "sony-linkbuds-s", sku: "TH-LBS", name: "Sony LinkBuds S", short: "Compact ANC earbuds.", desc: "Integrated processor V1, adaptive ANC, multipoint Bluetooth, 20-hour total battery.", price: 179, stock: 80, brand: "sony", cat: "tech-audio" }),
+  mk({ shop: "techhub", slug: "anker-soundcore-q45", sku: "TH-Q45", name: "Anker Soundcore Q45", short: "Hi-Res over-ear ANC headphones.", desc: "LDAC Hi-Res Wireless, adaptive ANC, 50-hour battery, custom EQ.", price: 99, stock: 150, brand: "anker", cat: "tech-audio", flags: ["sale"], cmp: 129, tags: ["on-sale"] }),
+
+  // -------- Wearables --------
+  mk({ shop: "techhub", slug: "samsung-galaxy-watch6", sku: "TH-GW6-44", name: "Samsung Galaxy Watch6 44mm", short: "Smart fitness companion.", desc: "Sapphire crystal, BioActive sensor, sleep coaching, advanced workout tracking.", price: 329, stock: 50, brand: "samsung", cat: "tech-wearables" }),
+  mk({ shop: "techhub", slug: "apple-watch-se", sku: "TH-AWSE-44", name: "Apple Watch SE 44mm", short: "All the essentials.", desc: "Heart-rate monitoring, fitness tracking, fall detection, and crash detection.", price: 249, stock: 60, brand: "apple", cat: "tech-wearables" }),
+
+  // -------- Tech Accessories --------
+  mk({ shop: "techhub", slug: "anker-magsafe-power-bank-10k", sku: "TH-ANK-MPB10", name: "Anker MagSafe Power Bank 10K", short: "Magnetic 10000mAh battery.", desc: "Snaps to MagSafe iPhones, 7.5W wireless and 20W USB-C wired output.", price: 59, stock: 220, brand: "anker", cat: "tech-accessories", flags: ["best"], tags: ["bestseller"] }),
+  mk({ shop: "techhub", slug: "apple-usbc-lightning-cable", sku: "TH-APL-USBC", name: "Apple USB-C to Lightning Cable 1m", short: "Genuine Apple charge cable.", desc: "Supports fast charging on supported iPhones with a USB-C power adapter.", price: 19, stock: 400, brand: "apple", cat: "tech-accessories" }),
+  mk({ shop: "techhub", slug: "samsung-25w-travel-adapter", sku: "TH-S25W", name: "Samsung 25W Travel Adapter", short: "Super Fast Charging adapter.", desc: "USB-C 25W PD adapter for Samsung Galaxy Super Fast Charging.", price: 35, stock: 250, brand: "samsung", cat: "tech-accessories" }),
+  mk({ shop: "techhub", slug: "sony-sd-128gb", sku: "TH-SD128", name: "Sony Tough SD Card 128GB", short: "Pro-grade UHS-II SD card.", desc: "Waterproof and shockproof V90 SD card with 300MB/s read speed.", price: 29, stock: 180, brand: "sony", cat: "tech-accessories" }),
+
+  // -------- Beauty Skincare --------
+  mk({ shop: "glow-and-bloom", slug: "nivea-soft-cream", sku: "GB-SK-006", name: "Nivea Soft Moisturizing Cream", short: "All-in-one moisturizer.", desc: "Light, fast-absorbing cream with vitamin E and jojoba oil for face, hands, and body.", price: 9, stock: 300, brand: "nivea", cat: "beauty-skincare" }),
+  mk({ shop: "glow-and-bloom", slug: "loreal-revitalift-night-serum", sku: "GB-SK-007", name: "L'Oréal Revitalift Night Serum", short: "Pro-retinol overnight serum.", desc: "Concentrated pro-retinol & vitamin E night serum to visibly reduce wrinkles in 4 weeks.", price: 34, cmp: 42, stock: 90, brand: "loreal", cat: "beauty-skincare", flags: ["sale", "best"], tags: ["on-sale", "bestseller"] }),
+  mk({ shop: "glow-and-bloom", slug: "maybelline-hydra-glow-toner", sku: "GB-SK-008", name: "Maybelline Hydra-Glow Toner", short: "Hydrating glow toner.", desc: "Alcohol-free toner with niacinamide and hyaluronic acid for an instant glow.", price: 14, stock: 150, brand: "maybelline", cat: "beauty-skincare", flags: ["new"], tags: ["new-arrival"] }),
+  mk({ shop: "glow-and-bloom", slug: "mac-hyper-real-glow-pads", sku: "GB-SK-009", name: "MAC Hyper Real Glow Pads", short: "Resurfacing exfoliating pads.", desc: "Lactic + glycolic acid pads to gently resurface and brighten dull skin.", price: 39, stock: 80, brand: "mac", cat: "beauty-skincare", tags: ["premium"] }),
+
+  // -------- Beauty Makeup --------
+  mk({ shop: "glow-and-bloom", slug: "mac-studio-fix-foundation", sku: "GB-MK-006", name: "MAC Studio Fix Fluid Foundation", short: "Long-wear matte foundation.", desc: "24-hour wear, oil-free liquid foundation in a wide shade range. SPF 15.", price: 44, stock: 120, brand: "mac", cat: "beauty-makeup", flags: ["best"], tags: ["bestseller", "premium"] }),
+  mk({ shop: "glow-and-bloom", slug: "maybelline-sky-high-mascara-brown", sku: "GB-MK-007", name: "Maybelline Sky High Mascara (Brown)", short: "Limitless lash length mascara.", desc: "Bamboo-extract formula and flex tower brush for sky-high length and volume.", price: 13, stock: 250, brand: "maybelline", cat: "beauty-makeup" }),
+  mk({ shop: "glow-and-bloom", slug: "loreal-true-match-concealer", sku: "GB-MK-008", name: "L'Oréal True Match Concealer", short: "Lightweight everyday concealer.", desc: "Buildable medium coverage with hyaluronic acid in 12 true-to-skin shades.", price: 12, stock: 200, brand: "loreal", cat: "beauty-makeup" }),
+
+  // -------- Beauty Fragrance --------
+  mk({ shop: "glow-and-bloom", slug: "mac-velvet-teddy-edt", sku: "GB-FR-005", name: "MAC Velvet Teddy Eau de Toilette", short: "Warm vanilla EDT inspired by the iconic shade.", desc: "Notes of warm vanilla, amber, and white musk. 50ml.", price: 59, stock: 60, brand: "mac", cat: "beauty-fragrance", tags: ["premium"] }),
+  mk({ shop: "glow-and-bloom", slug: "maybelline-floral-mist", sku: "GB-FR-006", name: "Maybelline Floral Body Mist", short: "Light floral body mist.", desc: "Refreshing daily-wear floral mist with notes of peony, lily, and white musk.", price: 25, stock: 110, brand: "maybelline", cat: "beauty-fragrance" }),
+
+  // -------- Beauty Hair --------
+  mk({ shop: "glow-and-bloom", slug: "loreal-elvive-shampoo", sku: "GB-HR-006", name: "L'Oréal Elvive Total Repair Shampoo", short: "Repairing daily shampoo.", desc: "Pro-keratin and ceramide formula repairs the 5 signs of damaged hair.", price: 11, stock: 250, brand: "loreal", cat: "beauty-hair" }),
+  mk({ shop: "glow-and-bloom", slug: "nivea-volume-care-conditioner", sku: "GB-HR-007", name: "Nivea Volume Care Conditioner", short: "Volume-boosting conditioner.", desc: "Lightweight conditioner that adds volume without weighing hair down.", price: 9, stock: 220, brand: "nivea", cat: "beauty-hair" }),
+
+  // -------- Home Decor --------
+  mk({ shop: "casa-nova", slug: "cn-linen-pillow-set", sku: "CN-DC-004", name: "Linen Throw Pillow Set", short: "Stonewashed linen pillow covers.", desc: "Set of 2 stonewashed linen pillow covers with hidden zip closures. 18\"x18\".", price: 42, stock: 80, brand: "nexora-home", cat: "home-decor" }),
+  mk({ shop: "casa-nova", slug: "cn-brass-candle-trio", sku: "CN-DC-005", name: "Brass Candle Holder Trio", short: "Sculptural brass candle holders.", desc: "Set of 3 solid-brass taper candle holders in graduated heights.", price: 54, stock: 50, brand: "nexora-home", cat: "home-decor", tags: ["trending"] }),
+  mk({ shop: "casa-nova", slug: "cn-woven-wall-hanging", sku: "CN-DC-006", name: "Woven Wall Hanging", short: "Hand-woven cotton tapestry.", desc: "Bohemian cotton wall hanging with wooden dowel and cotton fringe. 60x80cm.", price: 79, stock: 30, brand: "nexora-home", cat: "home-decor", flags: ["new"], tags: ["new-arrival"] }),
+
+  // -------- Home Kitchen --------
+  mk({ shop: "casa-nova", slug: "cn-cast-iron-skillet-12", sku: "CN-KT-003", name: 'Cast-Iron Skillet 12"', short: "Pre-seasoned cast-iron skillet.", desc: "Heavy-gauge pre-seasoned cast-iron skillet. Oven, stove, grill, and campfire safe.", price: 79, stock: 60, brand: "nexora-home", cat: "home-kitchen", flags: ["best"], tags: ["bestseller"] }),
+  mk({ shop: "casa-nova", slug: "cn-bamboo-cutting-set", sku: "CN-KT-004", name: "Bamboo Cutting Board Set", short: "Eco-friendly bamboo boards.", desc: "Set of 3 organic bamboo cutting boards with juice grooves. Knife-friendly surface.", price: 34, stock: 120, brand: "nexora-home", cat: "home-kitchen", tags: ["eco-friendly"] }),
+
+  // -------- Home Bedding --------
+  mk({ shop: "casa-nova", slug: "cn-linen-duvet-king", sku: "CN-BD-004", name: "Linen Duvet Cover (King)", short: "Stonewashed linen duvet cover.", desc: "100% European flax linen duvet cover with coconut-shell button closure.", price: 159, stock: 28, brand: "nexora-home", cat: "home-bedding", tags: ["premium"] }),
+  mk({ shop: "casa-nova", slug: "cn-memory-foam-pillows-2pk", sku: "CN-BD-005", name: "Memory Foam Pillows 2-Pack", short: "Cooling memory-foam pillows.", desc: "Pair of cooling-gel memory-foam pillows with washable bamboo covers.", price: 69, cmp: 89, stock: 90, brand: "nexora-home", cat: "home-bedding", flags: ["sale"], tags: ["on-sale"] }),
+];
+
+// ---------------------------------------------------------------
+// Customers (used for reviews and Q&A)
+// ---------------------------------------------------------------
+
+type CustomerSeed = { email: string; password: string; name: string };
+
+const customers: CustomerSeed[] = [
+  { email: "emma@nexora.dev", password: "Customer@123", name: "Emma Lopez" },
+  { email: "liam@nexora.dev", password: "Customer@123", name: "Liam Chen" },
+  { email: "sophia@nexora.dev", password: "Customer@123", name: "Sophia Patel" },
+  { email: "noah@nexora.dev", password: "Customer@123", name: "Noah Garcia" },
+  { email: "ava@nexora.dev", password: "Customer@123", name: "Ava Kim" },
+  { email: "mason@nexora.dev", password: "Customer@123", name: "Mason Brown" },
+];
+
+// ---------------------------------------------------------------
+// Review & Q&A content banks (kept short so all variants read well)
+// ---------------------------------------------------------------
+
+const reviewBank: Record<2 | 3 | 4 | 5, { title: string; comment: string }[]> = {
+  5: [
+    { title: "Absolutely love it!", comment: "Quality is outstanding and shipping was lightning-fast. Highly recommend." },
+    { title: "Best purchase this year", comment: "Lives up to the hype — feels premium and worth every penny. I'll be back for more." },
+    { title: "Exceeded expectations", comment: "Even better than the photos. Packaging was beautiful and product is flawless." },
+    { title: "Top-tier quality", comment: "Materials, finish and attention to detail are excellent. 10/10 from me." },
+    { title: "Five stars, easy", comment: "Exactly as described and delivered earlier than promised. Will repeat." },
+  ],
+  4: [
+    { title: "Great product overall", comment: "Really happy with this. A couple of minor nitpicks but a strong buy at this price." },
+    { title: "Solid choice", comment: "Does exactly what it promises and feels well-made. Would buy again." },
+    { title: "Good value for money", comment: "Quality is on par with the price point. No complaints." },
+    { title: "Recommended", comment: "Looks and works great. Took half a star off because shipping was a day late." },
+  ],
+  3: [
+    { title: "Decent — does the job", comment: "It's okay. Works as expected but nothing about it is wow." },
+    { title: "Average product", comment: "Mid-tier — fine for casual use but I expected slightly more for the price." },
+    { title: "Mixed feelings", comment: "Some things are great, others are just okay. Probably won't repurchase." },
+  ],
+  2: [
+    { title: "Not what I expected", comment: "Color and finish were noticeably different from the listing photos." },
+    { title: "Some issues", comment: "Functional, but the build feels cheaper than I'd hoped at this price." },
+    { title: "Just okay-ish", comment: "It works but quality control could be better. Won't be reordering." },
+  ],
+};
+
+const qaBank: { q: string; a: string }[] = [
+  { q: "Is this exactly as shown in the pictures?", a: "Yes — colors and styling match the listing. Lighting may vary slightly between screens." },
+  { q: "How long does shipping usually take?", a: "Most orders ship within 1-2 business days and arrive in 3-5 business days domestically." },
+  { q: "Is it true to size / accurate to description?", a: "Yes, this is true to size and matches the listed specs. See the size chart for exact measurements." },
+  { q: "What is the return policy on this item?", a: "30-day hassle-free returns on unused items in original packaging." },
+  { q: "Is this 100% authentic and brand-new?", a: "Yes — every item is sourced directly from authorized channels and shipped brand-new in original packaging." },
+  { q: "Does it come with a warranty?", a: "Yes, this product is covered by the manufacturer's standard warranty against defects." },
+];
+
+// Stable PRNG so the same product always produces the same ratings.
+function fnv1a(s: string): number {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h >>> 0;
+}
+function makeRand(seed: number): () => number {
+  let x = seed || 1;
+  return () => {
+    x = (Math.imul(x, 1664525) + 1013904223) >>> 0;
+    return x / 0xffffffff;
+  };
+}
+
+// ---------------------------------------------------------------
 // Seed runners
 // ---------------------------------------------------------------
 
@@ -870,7 +1168,9 @@ async function seedProducts() {
   let created = 0;
   let updated = 0;
 
-  for (const p of products) {
+  const allProducts = [...products, ...bonusProducts];
+  for (const p of allProducts) {
+    p.images = enrichImages(p);
     const seller = await prisma.seller.findUnique({
       where: { shopSlug: p.shopSlug },
     });
@@ -1020,7 +1320,192 @@ async function seedProducts() {
     });
   }
 
-  console.log(`✅ Products seeded (created: ${created}, updated: ${updated})`);
+  console.log(`✅ Products seeded (created: ${created}, updated: ${updated}, total: ${allProducts.length})`);
+}
+
+// ---------------------------------------------------------------
+// Customers — used as authors of reviews and Q&A
+// ---------------------------------------------------------------
+
+async function seedCustomers(): Promise<string[]> {
+  const ids: string[] = [];
+  for (const c of customers) {
+    let user = await prisma.user.findUnique({ where: { email: c.email } });
+    if (!user) {
+      try {
+        const signup = await auth.api.signUpEmail({
+          body: {
+            email: c.email,
+            password: c.password,
+            name: c.name,
+            role: Role.CUSTOMER,
+            rememberMe: false,
+          },
+        });
+        user = await prisma.user.findUnique({ where: { id: signup.user.id } });
+      } catch (err) {
+        console.error(`  ! Failed signing up ${c.email}:`, (err as Error).message);
+        continue;
+      }
+    }
+    if (!user) continue;
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { emailVerified: true, role: Role.CUSTOMER, status: UserStatus.ACTIVE },
+    });
+    // Ensure a Customer profile row exists so the user can review.
+    await prisma.customer.upsert({
+      where: { userId: user.id },
+      update: { fullName: c.name, email: c.email },
+      create: { userId: user.id, fullName: c.name, email: c.email },
+    });
+    ids.push(user.id);
+  }
+  console.log(`✅ Customers seeded (${ids.length})`);
+  return ids;
+}
+
+// ---------------------------------------------------------------
+// Reviews + Q&A — generated deterministically per product
+// ---------------------------------------------------------------
+
+async function seedReviewsAndQuestions(customerIds: string[]) {
+  if (customerIds.length === 0) {
+    console.warn("  ! No customers available — skipping reviews & Q&A.");
+    return;
+  }
+
+  const allDbProducts = await prisma.product.findMany({
+    where: { isDeleted: false },
+    select: { id: true, slug: true, name: true, sellerId: true },
+  });
+
+  // Cache seller user-ids so seller "official" answers come from the seller account.
+  const sellerUserCache = new Map<string, string>();
+  async function sellerUserId(sellerId: string): Promise<string | null> {
+    const cached = sellerUserCache.get(sellerId);
+    if (cached) return cached;
+    const seller = await prisma.seller.findUnique({
+      where: { id: sellerId },
+      select: { userId: true },
+    });
+    if (!seller) return null;
+    sellerUserCache.set(sellerId, seller.userId);
+    return seller.userId;
+  }
+
+  let reviewsCreated = 0;
+  let questionsCreated = 0;
+  let answersCreated = 0;
+
+  for (const product of allDbProducts) {
+    const seed = fnv1a(product.slug);
+    const rand = makeRand(seed);
+
+    // ----- Reviews -----
+    // 3..7 reviews per product, varied ratings 2..5 (weighted toward 4-5).
+    const reviewCount = 3 + Math.floor(rand() * 5); // 3..7
+    const ratingPool: (2 | 3 | 4 | 5)[] = [5, 5, 5, 4, 4, 4, 3, 5, 4, 2, 5, 4];
+    // Always guarantee at least one of each common rating across the catalog
+    // by rotating the pool start using the seed.
+    const start = seed % ratingPool.length;
+    const userOrder = [...customerIds].sort(() => (rand() < 0.5 ? -1 : 1));
+
+    for (let i = 0; i < reviewCount && i < userOrder.length; i++) {
+      const userId = userOrder[i];
+      const rating = ratingPool[(start + i) % ratingPool.length];
+      const tpl = reviewBank[rating][i % reviewBank[rating].length];
+
+      const existing = await prisma.review.findFirst({
+        where: { productId: product.id, userId },
+        select: { id: true },
+      });
+      if (existing) continue;
+
+      try {
+        await prisma.review.create({
+          data: {
+            productId: product.id,
+            userId,
+            rating,
+            title: tpl.title,
+            comment: tpl.comment,
+            status: "APPROVED",
+            helpfulCount: Math.floor(rand() * 30),
+          },
+        });
+        reviewsCreated += 1;
+      } catch {
+        /* ignore unique-constraint clashes from re-runs */
+      }
+    }
+
+    // ----- Q&A -----
+    // 1..3 questions per product, each with one answer (often official).
+    const qCount = 1 + Math.floor(rand() * 3); // 1..3
+    const sellerUid = await sellerUserId(product.sellerId);
+
+    for (let i = 0; i < qCount; i++) {
+      const tpl = qaBank[(start + i) % qaBank.length];
+      const askerId = userOrder[(i + 1) % userOrder.length];
+
+      // Idempotency: skip if an identical question already exists.
+      const dupe = await prisma.productQuestion.findFirst({
+        where: { productId: product.id, userId: askerId, question: tpl.q },
+        select: { id: true },
+      });
+      if (dupe) continue;
+
+      const isOfficial = rand() > 0.3 && !!sellerUid;
+      const answererId = isOfficial && sellerUid ? sellerUid : userOrder[(i + 2) % userOrder.length];
+
+      const created = await prisma.productQuestion.create({
+        data: {
+          productId: product.id,
+          userId: askerId,
+          question: tpl.q,
+          isAnswered: true,
+          answers: {
+            create: [
+              {
+                userId: answererId,
+                answer: tpl.a,
+                isOfficial,
+              },
+            ],
+          },
+        },
+      });
+      void created;
+      questionsCreated += 1;
+      answersCreated += 1;
+    }
+  }
+
+  console.log(
+    `✅ Reviews seeded (${reviewsCreated}); Q&A seeded (${questionsCreated} questions, ${answersCreated} answers)`,
+  );
+}
+
+// Recompute denormalised review aggregates on each product.
+async function recomputeProductAggregates() {
+  const all = await prisma.product.findMany({ select: { id: true } });
+  for (const { id } of all) {
+    const agg = await prisma.review.aggregate({
+      where: { productId: id, status: "APPROVED" },
+      _avg: { rating: true },
+      _count: { _all: true },
+    });
+    const avg = agg._avg.rating;
+    await prisma.product.update({
+      where: { id },
+      data: {
+        avgRating: avg != null ? Number(avg.toFixed(2)) : null,
+        reviewCount: agg._count._all,
+      },
+    });
+  }
+  console.log(`✅ Product review aggregates recomputed (${all.length} products)`);
 }
 
 // ---------------------------------------------------------------
@@ -1038,6 +1523,9 @@ async function main() {
   await seedCategories();
   await seedTags();
   await seedProducts();
+  const customerIds = await seedCustomers();
+  await seedReviewsAndQuestions(customerIds);
+  await recomputeProductAggregates();
   console.log("🎉 Nexora seed complete.");
 }
 

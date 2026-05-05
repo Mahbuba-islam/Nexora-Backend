@@ -75,6 +75,12 @@ export const adminSuspendSellerSchema = z.object({
   reason: z.string().min(3).max(2000),
 });
 
+export const adminMessageSellerSchema = z.object({
+  title: z.string().min(2).max(200),
+  message: z.string().min(2).max(2000),
+  actionUrl: z.string().max(500).optional(),
+});
+
 /* ---------- Admin: edit shop fields ---------- */
 export const adminUpdateSellerSchema = z.object({
   body: z

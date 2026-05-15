@@ -344,5 +344,3 @@ Full-Stack Web Developer
 
 
 
-একদম startup pitch level করে দিতে পারি 🔥
-```
